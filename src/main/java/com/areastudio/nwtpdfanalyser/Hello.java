@@ -9,8 +9,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -30,16 +28,16 @@ public final class Hello extends HttpServlet {
                       HttpServletResponse response)
             throws IOException, ServletException {
 
-        Part filePart = request.getPart("file"); // Retrieves <input type="file" name="file">
+        Part filePart = request.getPart("pdf"); // Retrieves <input type="file" name="file">
         String fileName = filePart.getName();
 
-        response.setContentType("text/plain");
-        PrintWriter writer = response.getWriter();
-        writer.println(request.getParameter("color"));
-        writer.println(fileName);
+        response.setContentType("application/pdf");
+//        PrintWriter writer = response.getWriter();
+//        writer.println(request.getParameter("color"));
+//        writer.println(fileName);
 
         PDDocument pdDoc = null;
-        UtilsBible.getBooks(15);
+        UtilsBible.getBooks(2);
 
 
         PDFParser parser = new PDFParser(filePart.getInputStream());
@@ -63,7 +61,7 @@ public final class Hello extends HttpServlet {
             throw new ServletException(e);
         }
 
-        pdDoc.save("new_" + fileName);
+        pdDoc.save(response.getOutputStream());
         try {
             if (parser.getDocument() != null) {
                 parser.getDocument().close();
