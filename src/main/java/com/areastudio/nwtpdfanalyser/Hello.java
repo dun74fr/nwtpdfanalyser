@@ -1,6 +1,10 @@
 package com.areastudio.nwtpdfanalyser;
 
+import org.apache.pdfbox.io.RandomAccessBuffer;
+import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
+import org.apache.pdfbox.io.RandomAccessFile;
 import org.apache.pdfbox.pdfparser.PDFParser;
+import org.apache.pdfbox.pdfparser.PDFStreamParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
 import javax.servlet.ServletException;
@@ -40,7 +44,7 @@ public final class Hello extends HttpServlet {
         UtilsBible.getBooks(2);
 
 
-        PDFParser parser = new PDFParser(filePart.getInputStream());
+        PDFParser parser = new PDFParser(new RandomAccessBufferedFileInputStream(filePart.getInputStream()));
 
         parser.parse();
         pdDoc = new PDDocument(parser.getDocument());
