@@ -4,7 +4,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageTree;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.common.PDTextStream;
+//import org.apache.pdfbox.pdmodel.common.PDTextStream;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
@@ -281,7 +281,7 @@ public class PDFTextAnnotator extends PDFTextStripper {
 					String content = UtilsBible.handleSendText(match.str);
 					if (content != null && content.length() > 0) {
 						markup.setContents(content);
-						markup.setRichContents(new PDTextStream(content));
+						markup.setRichContents(content);
 						annotations.add(markup);
 						highligts.add(markup);
 					}
