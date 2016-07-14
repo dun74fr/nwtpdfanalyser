@@ -14,7 +14,17 @@ public final class Hello extends HttpServlet {
             throws IOException, ServletException {
         response.setContentType("text/plain");
         PrintWriter writer = response.getWriter();
-        writer.println("Sup?");
+        writer.println(request.getParameter("color"));
     }
-    
+
+    @Override
+    public void doPost(HttpServletRequest request,
+                      HttpServletResponse response)
+            throws IOException, ServletException {
+
+
+        response.setContentType("text/plain");
+        PrintWriter writer = response.getWriter();
+        writer.println(request.getParameter("color"));
+    }
 }
