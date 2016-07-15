@@ -49,6 +49,7 @@ public final class Hello extends HttpServlet {
             System.out.println("ImportLang :" +LANG_JSON);
         }
         catch (Exception e) {
+            e.printStackTrace();
             System.out.println("ImportLang failed :" +e.getMessage());
         }
 
