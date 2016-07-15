@@ -527,8 +527,10 @@ public class UtilsBible {
 
     public String getStringForFile(File html) {
         Date start = new Date();
-//        System.out.println("GETBOOK " + "getStringForFile : " + start);
         try {
+        System.out.println("GETBOOK " + "getStringForFile : " + html.toString());
+        System.out.println("GETBOOK " + "getStringForFile : " + html.getCanonicalPath());
+
             BufferedReader in = new BufferedReader(new InputStreamReader(
                     context.getResourceAsStream( html.toString() )));
             String y = "";

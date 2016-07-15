@@ -33,7 +33,8 @@ public class LanguageXml {
             ArrayList<Lang> langArray = new ArrayList<Lang>();
             for (int i = 0; i < langs.getLength(); i++) {
                 Node langNode = langs.item(i);
-                if (Integer.valueOf(langNode.getAttributes().getNamedItem("id").getNodeValue()) == lang_id);
+
+                if (Integer.parseInt(langNode.getAttributes().getNamedItem("id").getNodeValue()) == lang_id);
                 {
 
                     Lang lang = new Lang();
