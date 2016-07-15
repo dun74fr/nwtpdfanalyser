@@ -37,6 +37,7 @@ public class LanguageXml {
                 {
 
                     Lang lang = new Lang();
+                    System.out.println("Lang Text :" + langNode.getAttributes().getNamedItem("text").getNodeValue());
                     lang.setId(Integer.valueOf(langNode.getAttributes().getNamedItem("id").getNodeValue()));
                     lang.setText(langNode.getAttributes().getNamedItem("text").getNodeValue());
                     lang.setCode(langNode.getAttributes().getNamedItem("code").getNodeValue());

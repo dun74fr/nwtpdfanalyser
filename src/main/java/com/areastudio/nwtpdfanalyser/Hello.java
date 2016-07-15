@@ -51,7 +51,7 @@ public final class Hello extends HttpServlet {
         PDDocument pdDoc = null;
 //        UtilsBible.getBooks(2);
         try {
-//            System.out.println("RealPath : " +getServletContext().getRealPath("/langs.xml"));
+            System.out.println("Import lang : " + Integer.parseInt(request.getParameter("lang_id")));
             LANG_JSON = LanguageXml.importFile(getResource("langs.xml"), Integer.parseInt(request.getParameter("lang_id")));
             System.out.println("ImportLang :" +LANG_JSON);
         }
