@@ -4,7 +4,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageTree;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-//import org.apache.pdfbox.pdmodel.common.PDTextStream;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
@@ -20,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+//import org.apache.pdfbox.pdmodel.common.PDTextStream;
 
 public class PDFTextAnnotator extends PDFTextStripper {
 
@@ -106,9 +107,9 @@ public class PDFTextAnnotator extends PDFTextStripper {
 		public List<Match> getTextPositions(Integer pageNo, Pattern pattern) {
 			Matcher matcher = pattern.matcher(getText(pageNo));
 			List<Match> matches = new ArrayList<Match>();
-
+			UtilsBible bible = new UtilsBible(2);
 			while (matcher.find()) {
-				if (isBibleReference(matcher.group())) {
+				if (bible.isBibleReference(matcher.group())) {
 					List<TextPosition> elements = this.getTextPositions(pageNo)
 							.subList(matcher.start(), matcher.end());
 					matches.add(new Match(matcher.group(), elements));
@@ -240,7 +241,7 @@ public class PDFTextAnnotator extends PDFTextStripper {
 			throw new Exception(
 					"TextCache was not initilized, please run initialize on the document first");
 		}
-
+		UtilsBible bible = new UtilsBible(currentLang);
 		PDPageTree pages = pdf.getDocumentCatalog().getPages();
 
 		ArrayList<PDAnnotationTextMarkup> highligts = new ArrayList<PDAnnotationTextMarkup>();
@@ -278,7 +279,7 @@ public class PDFTextAnnotator extends PDFTextStripper {
 					markup.setConstantOpacity((float) 0.8);
 					markup.setColor(getDefaultColor());
 					markup.setPrinted(true);
-					String content = UtilsBible.handleSendText(match.str);
+					String content = bible.handleSendText(match.str,400);
 					if (content != null && content.length() > 0) {
 						markup.setContents(content);
 						markup.setRichContents(content);
@@ -351,61 +352,61 @@ public class PDFTextAnnotator extends PDFTextStripper {
 //		return null;
 //	}
 
-	private boolean isBibleReference(String refString) {
-		String patString = "(\\d{0,1}\\.?)\\W*([\\wÀ-ú\\p{L}]{2,})\\.?\\s*(\\d{1,3})(?:\\D+(\\d{1,3})){0,1}((?:(?:,\\s?|-\\s?)\\d{1,3})*){0,1}";
-		Pattern p = Pattern.compile(patString);
-		Matcher m = p.matcher(refString);
-		String prefix = "", book = "";
-		int chapter = 0, verse = 0;
-		ArrayList<Integer> verses = new ArrayList();
-		if (m.find()) {
-			int count = m.groupCount();
-			if (count > 0) {
-				prefix = m.group(1) == null ? "" : m.group(1).concat(" ");
-			}
-			// must at least have a book or things will eventually fail
-			if (count > 1) {
-				book = m.group(2) == null ? "" : m.group(2).trim();
-			}
-			// default chapter to 1
-			if (count > 2) {
-				chapter = Integer.parseInt(m.group(3) == null ? "0" : m
-						.group(3));
-			}
-			// default verse to 1
-			if (count > 3) {
-				verse = Integer.parseInt(m.group(4) == null ? "0" : m.group(4));
-				if (verse > 0) {
-					verses.add(verse);
-				}
-			}
-			if (verses.size() > 0 && count > 4) {
-				// verse = Integer.parseInt(m.group(4) == null ? "1" :
-				// m.group(4));
-				String[] versesgp = m.group(5).replaceAll(" ", "")
-						.split("((?<=[-,])|(?=[-,]))");
-				for (int i = 0; i < versesgp.length; i++) {
-					if (versesgp[i].equals("-")) {
-						for (int y = verses.get(verses.size() - 1) + 1; y <= Integer
-								.parseInt(versesgp[i + 1]); y++) {
-							verses.add(y);
-						}
-						i++;
-					} else if (versesgp[i].equals(",")) {
-						verses.add(Integer.parseInt(versesgp[i + 1]));
-						i++;
-					}
-				}
-			}
-		}
-		if (book.length() > 1) {
-			book = UtilsBible.getBook(prefix + book);
-			if (book.length() > 0 && chapter > 0 && verses.size() > 0) {
-				return true;
-			}
-		}
-		return false;
-	}
+//	private boolean isBibleReference(String refString) {
+//		String patString = "(\\d{0,1}\\.?)\\W*([\\wÀ-ú\\p{L}]{2,})\\.?\\s*(\\d{1,3})(?:\\D+(\\d{1,3})){0,1}((?:(?:,\\s?|-\\s?)\\d{1,3})*){0,1}";
+//		Pattern p = Pattern.compile(patString);
+//		Matcher m = p.matcher(refString);
+//		String prefix = "", book = "";
+//		int chapter = 0, verse = 0;
+//		ArrayList<Integer> verses = new ArrayList();
+//		if (m.find()) {
+//			int count = m.groupCount();
+//			if (count > 0) {
+//				prefix = m.group(1) == null ? "" : m.group(1).concat(" ");
+//			}
+//			// must at least have a book or things will eventually fail
+//			if (count > 1) {
+//				book = m.group(2) == null ? "" : m.group(2).trim();
+//			}
+//			// default chapter to 1
+//			if (count > 2) {
+//				chapter = Integer.parseInt(m.group(3) == null ? "0" : m
+//						.group(3));
+//			}
+//			// default verse to 1
+//			if (count > 3) {
+//				verse = Integer.parseInt(m.group(4) == null ? "0" : m.group(4));
+//				if (verse > 0) {
+//					verses.add(verse);
+//				}
+//			}
+//			if (verses.size() > 0 && count > 4) {
+//				// verse = Integer.parseInt(m.group(4) == null ? "1" :
+//				// m.group(4));
+//				String[] versesgp = m.group(5).replaceAll(" ", "")
+//						.split("((?<=[-,])|(?=[-,]))");
+//				for (int i = 0; i < versesgp.length; i++) {
+//					if (versesgp[i].equals("-")) {
+//						for (int y = verses.get(verses.size() - 1) + 1; y <= Integer
+//								.parseInt(versesgp[i + 1]); y++) {
+//							verses.add(y);
+//						}
+//						i++;
+//					} else if (versesgp[i].equals(",")) {
+//						verses.add(Integer.parseInt(versesgp[i + 1]));
+//						i++;
+//					}
+//				}
+//			}
+//		}
+//		if (book.length() > 1) {
+//			book = UtilsBible.getBook(prefix + book);
+//			if (book.length() > 0 && chapter > 0 && verses.size() > 0) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
 
 	private float[] computeQuads(PDRectangle rect) {
 		float[] quads = new float[8];
@@ -746,7 +747,7 @@ public class PDFTextAnnotator extends PDFTextStripper {
 	protected void writePageEnd() {
 		String pageEnd = this.getPageEnd();
 		this.textCache.append(pageEnd, null);
-		System.out.println(textCache.getText(getCurrentPageNo()));
+//		System.out.println(textCache.getText(getCurrentPageNo()));
 	}
 
 	public float getHeightModifier() {

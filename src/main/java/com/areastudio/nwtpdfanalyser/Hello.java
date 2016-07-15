@@ -56,10 +56,7 @@ public final class Hello extends HttpServlet {
         // match
         pdfAnnotator.initialize(pdDoc);
         try {
-            pdfAnnotator
-                    .highlight(
-                            pdDoc,
-                            "(\\d{0,1})\\s*([\\wÀ-ú\\p{L}]{2,})\\.?\\s*(\\d{1,3})(?::(\\d{1,3}))((?:(?:,\\s?|-)\\d{1,3})*)");
+            pdfAnnotator.highlight(pdDoc, "((?:\\d\\.?)?)\\s?([\\wÀ-ú]\\p{L}{1,})\\.?\\s*(\\d{1,3})(?::\\s?(\\d{1,3}))((?:(?:,\\s?|-\\s?)\\d{1,3})*)(?:\\s?;\\s?(\\d{1,3})(?::\\s?(\\d{1,3}))((?:(?:,\\s?|-\\s?)\\d{1,3})*))*");
         }
         catch (Exception e){
             throw new ServletException(e);

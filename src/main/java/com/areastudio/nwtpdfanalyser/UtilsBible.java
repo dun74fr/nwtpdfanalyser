@@ -1,92 +1,216 @@
 package com.areastudio.nwtpdfanalyser;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.*;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UtilsBible {
 
-    private static Map<String, Integer> books = new LinkedHashMap<String, Integer>();
-    private static int currentLang;
+    private Map<String, Integer> books = new LinkedHashMap();
+    private int currentLang;
+    private final Pattern pattern = Pattern.compile("((?:\\d\\.?)?)\\s?([\\wÀ-ú]\\p{L}{1,})\\.?\\s*(\\d{1,3})(?::\\s?(\\d{1,3}))((?:(?:,\\s?|-\\s?)\\d{1,3})*)(?:\\s?;\\s?(\\d{1,3})(?::\\s?(\\d{1,3}))((?:(?:,\\s?|-\\s?)\\d{1,3})*))*");
+//    private HashMap<Integer, HashMap<Integer, String>> audioList;
+
+    private static String bibleFileName = "bi12_%1.epub";
+    private static String bibleFileNameNew = "nwt_%1.epub";
+
+    public static String bibleUrl = "http://www.jw.org/apps/TRGCHlZRQVNYVrXF?output=json&pub=bi12&fileformat=EPUB&alllangs=0&langwritten=%1";
+    public static String bibleUrlNew = "http://www.jw.org/apps/TRGCHlZRQVNYVrXF?output=json&pub=nwt&fileformat=EPUB&alllangs=0&langwritten=%1";
+    private Map<String, String> epubBooks;
+
+    public UtilsBible(int lang) {
+        currentLang = lang;
+        initBooks(currentLang);
+    }
 
     public static String normalizeBook(String book) {
 
-        String cleanedBook = book;
-        cleanedBook = book.toLowerCase();
+        return normalize(book, true);
 
-        cleanedBook = cleanedBook.replace(" ", "-");
+    }
+
+    public static String normalize(String book, boolean removeSpace) {
+
+        String cleanedBook = book.toLowerCase();
+
+        if (removeSpace) {
+            cleanedBook = cleanedBook.replace(" ", "-");
+        }
+
+        cleanedBook = cleanedBook.replace("·", "");
+        cleanedBook = cleanedBook.replace("′", "");
+        cleanedBook = cleanedBook.replace("́", "");
         cleanedBook = cleanedBook.replace("á", "a");
-        cleanedBook = cleanedBook.replace("á", "a");
+        cleanedBook = cleanedBook.replace("á", "a");
+        cleanedBook = cleanedBook.replace("ä", "a");
         cleanedBook = cleanedBook.replace("ä", "a");
         cleanedBook = cleanedBook.replace("â", "a");
         cleanedBook = cleanedBook.replace("ã", "a");
+        cleanedBook = cleanedBook.replace("ạ", "a");
+
 
         cleanedBook = cleanedBook.replace("é", "e");
-        cleanedBook = cleanedBook.replace("é", "e");
-        cleanedBook = cleanedBook.replace("é", "e");
+        cleanedBook = cleanedBook.replace("é", "e");
+        cleanedBook = cleanedBook.replace("é", "e");
         cleanedBook = cleanedBook.replace("è", "e");
         cleanedBook = cleanedBook.replace("ë", "e");
         cleanedBook = cleanedBook.replace("ê", "e");
+        cleanedBook = cleanedBook.replace("ẹ", "e");
 
         cleanedBook = cleanedBook.replace("í", "i");
         cleanedBook = cleanedBook.replace("ı́", "i");
         cleanedBook = cleanedBook.replace("ıı ́", "i");
         cleanedBook = cleanedBook.replace("ï", "i");
         cleanedBook = cleanedBook.replace("î", "i");
+        cleanedBook = cleanedBook.replace("ị", "i");
+
 
         cleanedBook = cleanedBook.replace("ó", "o");
-        cleanedBook = cleanedBook.replace("ó", "o");
+        cleanedBook = cleanedBook.replace("ó", "o");
+        cleanedBook = cleanedBook.replace("ö", "o");
         cleanedBook = cleanedBook.replace("ö", "o");
         cleanedBook = cleanedBook.replace("ô", "o");
         cleanedBook = cleanedBook.replace("õ", "o");
+        cleanedBook = cleanedBook.replace("ọ", "o");
+
 
         cleanedBook = cleanedBook.replace("ú", "u");
-        cleanedBook = cleanedBook.replace("ú", "u");
+        cleanedBook = cleanedBook.replace("ú", "u");
         cleanedBook = cleanedBook.replace("ü", "u");
         cleanedBook = cleanedBook.replace("ü", "u");
+        cleanedBook = cleanedBook.replace("u ̈", "u");
 
         cleanedBook = cleanedBook.replace("û", "o");
         cleanedBook = cleanedBook.replace("ç", "c");
+        cleanedBook = cleanedBook.replace("ỵ", "y");
 
+        cleanedBook = cleanedBook.replace("sprüche", "spruche");
         return cleanedBook;
 
     }
 
-    public static Map<String, Integer> getBooks(int lang) {
-        if (books.isEmpty() || lang != currentLang) {
-            initBooks(lang);
-        }
+    public String normalizeBookKorean(String book) {
+        book = book.replace("Fë!", "창세기");
+        book = book.replace("fXŠ", "출애굽기");
+        book = book.replace("Ô´!", "레위기");
+        book = book.replace("W!!", "민수기");
+        book = book.replace("!è", "신명기");
+        book = book.replace("~B!K ", "여호수아");
+        book = book.replace("ÌÌ", "사사기");
+        book = book.replace("õ!", "룻기");
+        book = book.replace("ÌBzÕ", "사무엘상");
+        book = book.replace("ÌBz!", "사무엘하");
+        book = book.replace("‚œ!Õ", "열왕기상");
+        book = book.replace("‚œ!!", "열왕기하");
+        book = book.replace("\"H!Õ", "역대기상");
+        book = book.replace("\"H!!", "역대기하");
+        book = book.replace("w# ́", "에스라");
+        book = book.replace("(5U^", "느헤미야");
+        book = book.replace("w#O", "에스더");
+        book = book.replace("_!", "욥기");
+        book = book.replace("þ", "시편");
+        book = book.replace("Øj", "잠언");
+        book = book.replace("a^á", "전도서");
+        book = book.replace("øa;Å!¾", "솔로몬의 노래");
+        book = book.replace("ÆÌ^", "이사야");
+        book = book.replace("ŠÔU^", "예레미야");
+        book = book.replace("ŠÔU^ X#", "예레미야 애가");
+        book = book.replace("w##", "에스겔");
+        book = book.replace("92z", "다니엘");
+        book = book.replace("BëK", "호세아");
+        book = book.replace(" z", "요엘");
+        book = book.replace("K8#", "아모스");
+        book = book.replace("Œ_!", "오바댜");
+        book = book.replace(" Û", "요나");
+        book = book.replace("U#", "미가");
+        book = book.replace("ÛX", "나훔");
+        book = book.replace("!`p", "하박국");
+        book = book.replace("#_ò", "스바냐");
+        book = book.replace("\"$", "학개");
+        book = book.replace("##Ç", "스가랴");
+        book = book.replace("!´!", "말라기");
+
+        book = book.replace("·ŠÂ", "마태복음");
+        book = book.replace("#ŠÂ", "마가복음");
+        book = book.replace("\u0002\u0002", "마가복음");
+        book = book.replace("!#ŠÂ", "누가복음");
+        book = book.replace(" !ŠÂ", "요한복음");
+        book = book.replace(" !", "요한복음");
+        book = book.replace("Ì^-a", "사도행전");
+        book = book.replace("a\"á", "로마서");
+        book = book.replace("1˝^ aá", "고린도 전서");
+        book = book.replace("1˝^ Tá", "고린도 후서");
+        book = book.replace("˘´‚Ká", "갈라디아서");
+        book = book.replace("w}õá", "에베소서");
+        book = book.replace("¦&‰á", "빌립보서");
+        book = book.replace("]axá", "골로새서");
+        book = book.replace("YÏa2# aá", "데살로니가 전서");
+        book = book.replace("YÏa2# Tá", "데살로니가 후서");
+        book = book.replace("‚8Y aá", "디모데 전서");
+        book = book.replace("‚8Y Tá", "디모데 후서");
+        book = book.replace("‚^á", "디도서");
+        book = book.replace("¦Ô;á", "빌레몬서");
+        book = book.replace("m ˚á", "히브리서");
+        book = book.replace("^1‰á", "야고보서");
+        book = book.replace("}ya aá", "베드로 전서");
+        book = book.replace("}ya Tá", "베드로 후서");
+        book = book.replace(" ! 1á", "요한 1서");
+        book = book.replace(" ! 2á", "요한 2서");
+        book = book.replace(" ! 3á", "요한 3서");
+        book = book.replace("¹9á", "유다서");
+        book = book.replace("0\u0005å", "요한 계시록");
+        return book;
+    }
+
+    public Map<String, Integer> getBooks() {
+//        if (books.isEmpty() || lang != currentLang) {
+//            initBooks(lang);
+//        }
         return books;
     }
 
-    public static String getBook(int bookNum) {
-        return books.keySet().toArray(new String[books.keySet().size()])[bookNum];
+    public String getBook(int bookNum) {
+        if (bookNum < books.size() && bookNum >= 0) {
+            return books.keySet().toArray(new String[books.keySet().size()])[bookNum];
+        } else if (books.size() > 0) {
+            return books.keySet().toArray(new String[books.keySet().size()])[0];
+        } else {
+            return "";
+        }
     }
 
-    public static int getChapterNumber(int i) {
-        return books.get(getBook(i)).intValue();
+//    public String getFirstBook() {
+//        return books.keySet().toArray(new String[books.keySet().size()])[0];
+//    }
+
+    public int getBookChap(String book) {
+        return books.get(book) != null ? books.get(book) : 0;
     }
 
-    public static String getBook(String book) {
+    public String getBook(String book) {
         book = book.trim();
         book = book.replace("-", " ");
-        book = book.replace(".", "");
-        int i = 0;
+//        book = book.replace(".", "");
         book = normalizeBook(book);
+//        if (currentLang == 15) {
+//            book = normalizeBookKorean(book);
+//        }
+        if (book.length() < 2) {
+            return "";
+        }
         if (book.startsWith("apocal") || book.startsWith("offb")) {
             return books.keySet().toArray(new String[1])[books.keySet().size() - 1];
+        } else if (book.startsWith("salm")) {
+            return getBook(18);
         }
         for (String b : books.keySet()) {
             String nb = normalizeBook(b);
@@ -94,16 +218,55 @@ public class UtilsBible {
             if (nb.equals(book) || nb.startsWith(book)) {
                 return b;
             }
-            i++;
         }
-        return "";
+        int distance = 1000;
+        String returnBook = "";
+        for (String b : books.keySet()) {
+            if (book.startsWith(b.substring(0, 1).toLowerCase())) {
+                int d = distance(b, book);
+                if (d <= distance && containAll(book, b)) {
+                    distance = d;
+                    returnBook = b;
+                }
+            }
+        }
+        return returnBook;
     }
 
-    public static int getBookNum(String book) {
+    public static boolean containAll(String subset, String full) {
+        for (String c : subset.split("(?<=.)")) {
+            if (!full.toLowerCase().contains(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static int distance(String a, String b) {
+        a = a.toLowerCase();
+        b = b.toLowerCase();
+        // i == 0
+        int[] costs = new int[b.length() + 1];
+        for (int j = 0; j < costs.length; j++)
+            costs[j] = j;
+        for (int i = 1; i <= a.length(); i++) {
+            // j == 0; nw = lev(i - 1, j)
+            costs[0] = i;
+            int nw = i - 1;
+            for (int j = 1; j <= b.length(); j++) {
+                int cj = Math.min(1 + Math.min(costs[j], costs[j - 1]), a.charAt(i - 1) == b.charAt(j - 1) ? nw : nw + 1);
+                nw = costs[j];
+                costs[j] = cj;
+            }
+        }
+        return costs[b.length()];
+    }
+
+    public int getBookNum(String book) {
         book = book.replace("-", " ");
         int i = 0;
         for (String b : books.keySet()) {
-            if (b.equals(book)) {
+            if (b.replace("-", " ").equals(book)) {
                 return i;
             }
             i++;
@@ -111,3736 +274,76 @@ public class UtilsBible {
         return -1;
     }
 
-    private static void initBooks(int lang) {
+    private void initBooks(int lang) {
         books.clear();
-        switch (lang) {
-        case -1:
-            books.put("", 1);
-            break;
-        case 1:
-            books.put("Genèse", 50);
-            books.put("Exode", 40);
-            books.put("Lévitique", 27);
-            books.put("Nombres", 36);
-            books.put("Deutéronome", 34);
-            books.put("Josué", 24);
-            books.put("Juges", 21);
-            books.put("Ruth", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Rois", 22);
-            books.put("2 Rois", 25);
-            books.put("1 Chroniques", 29);
-            books.put("2 Chroniques", 36);
-            books.put("Ezra", 10);
-            books.put("Nehémia", 13);
-            books.put("Esther", 10);
-            books.put("Job", 42);
-            books.put("Psaumes", 150);
-            books.put("Proverbes", 31);
-            books.put("Ecclésiaste", 12);
-            books.put("Chant de Salomon", 8);
-            books.put("Isaïe", 66);
-            books.put("Jérémie", 52);
-            books.put("Lamentations", 5);
-            books.put("Ezékiel", 48);
-            books.put("Daniel", 12);
-            books.put("Hoshéa", 14);
-            books.put("Yoël", 3);
-            books.put("Amos", 9);
-            books.put("Obadia", 1);
-            books.put("Yona", 4);
-            books.put("Mika", 7);
-            books.put("Nahoum", 3);
-            books.put("Habaqouq", 3);
-            books.put("Tsephania", 3);
-            books.put("Haggai", 2);
-            books.put("Zekaria", 14);
-            books.put("Malaki", 4);
-            books.put("Matthieu", 28);
-            books.put("Marc", 16);
-            books.put("Luc", 24);
-            books.put("Jean", 21);
-            books.put("Actes", 28);
-            books.put("Romains", 16);
-            books.put("1 Corinthiens", 16);
-            books.put("2 Corinthiens", 13);
-            books.put("Galates", 6);
-            books.put("Ephésiens", 6);
-            books.put("Philippiens", 4);
-            books.put("Colossiens", 4);
-            books.put("1 Thessaloniciens", 5);
-            books.put("2 Thessaloniciens", 3);
-            books.put("1 Timothée", 6);
-            books.put("2 Timothée", 4);
-            books.put("Tite", 3);
-            books.put("Philémon", 1);
-            books.put("Hébreux", 13);
-            books.put("Jacques", 5);
-            books.put("1 Pierre", 5);
-            books.put("2 Pierre", 3);
-            books.put("1 Jean", 5);
-            books.put("2 Jean", 1);
-            books.put("3 Jean", 1);
-            books.put("Jude", 1);
-            books.put("Révélation", 22);
-            break;
-        case 2:
-            books.put("Genesis", 50);
-            books.put("Exodus", 40);
-            books.put("Leviticus", 27);
-            books.put("Numbers", 36);
-            books.put("Deuteronomy", 34);
-            books.put("Joshua", 24);
-            books.put("Judges", 21);
-            books.put("Ruth", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Kings", 22);
-            books.put("2 Kings", 25);
-            books.put("1 Chronicles", 29);
-            books.put("2 Chronicles", 36);
-            books.put("Ezra", 10);
-            books.put("Nehemiah", 13);
-            books.put("Esther", 10);
-            books.put("Job", 42);
-            books.put("Psalms", 150);
-            books.put("Proverbs", 31);
-            books.put("Ecclesiastes", 12);
-            books.put("Song of Solomon", 8);
-            books.put("Isaiah", 66);
-            books.put("Jeremiah", 52);
-            books.put("Lamentations", 5);
-            books.put("Ezekiel", 48);
-            books.put("Daniel", 12);
-            books.put("Hosea", 14);
-            books.put("Joel", 3);
-            books.put("Amos", 9);
-            books.put("Obadiah", 1);
-            books.put("Jonah", 4);
-            books.put("Micah", 7);
-            books.put("Nahum", 3);
-            books.put("Habakkuk", 3);
-            books.put("Zephaniah", 3);
-            books.put("Haggai", 2);
-            books.put("Zechariah", 14);
-            books.put("Malachi", 4);
-            books.put("Matthew", 28);
-            books.put("Mark", 16);
-            books.put("Luke", 24);
-            books.put("John", 21);
-            books.put("Acts", 28);
-            books.put("Romans", 16);
-            books.put("1 Corinthians", 16);
-            books.put("2 Corinthians", 13);
-            books.put("Galatians", 6);
-            books.put("Ephesians", 6);
-            books.put("Philippians", 4);
-            books.put("Colossians", 4);
-            books.put("1 Thessalonians", 5);
-            books.put("2 Thessalonians", 3);
-            books.put("1 Timothy", 6);
-            books.put("2 Timothy", 4);
-            books.put("Titus", 3);
-            books.put("Philemon", 1);
-            books.put("Hebrews", 13);
-            books.put("James", 5);
-            books.put("1 Peter", 5);
-            books.put("2 Peter", 3);
-            books.put("1 John", 5);
-            books.put("2 John", 1);
-            books.put("3 John", 1);
-            books.put("Jude", 1);
-            books.put("Revelation", 22);
-            break;
-        case 3:
-            books.put("Génesis", 50);
-            books.put("Éxodo", 40);
-            books.put("Levítico", 27);
-            books.put("Números", 36);
-            books.put("Deuteronomio", 34);
-            books.put("Josué", 24);
-            books.put("Jueces", 21);
-            books.put("Rut", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Reyes", 22);
-            books.put("2 Reyes", 25);
-            books.put("1 Crónicas", 29);
-            books.put("2 Crónicas", 36);
-            books.put("Esdras", 10);
-            books.put("Nehemías", 13);
-            books.put("Ester", 10);
-            books.put("Job", 42);
-            books.put("Salmos", 150);
-            books.put("Proverbios", 31);
-            books.put("Eclesiastés", 12);
-            books.put("El Cantar de los Cantares", 8);
-            books.put("Isaías", 66);
-            books.put("Jeremías", 52);
-            books.put("Lamentaciones", 5);
-            books.put("Ezequiel", 48);
-            books.put("Daniel", 12);
-            books.put("Oseas", 14);
-            books.put("Joel", 3);
-            books.put("Amós", 9);
-            books.put("Abdías", 1);
-            books.put("Jonás", 4);
-            books.put("Miqueas", 7);
-            books.put("Nahúm", 3);
-            books.put("Habacuc", 3);
-            books.put("Sofonías", 3);
-            books.put("Ageo", 2);
-            books.put("Zacarías", 14);
-            books.put("Malaquías", 4);
-            books.put("Mateo", 28);
-            books.put("Marcos", 16);
-            books.put("Lucas", 24);
-            books.put("Juan", 21);
-            books.put("Hechos", 28);
-            books.put("Romanos", 16);
-            books.put("1 Corintios", 16);
-            books.put("2 Corintios", 13);
-            books.put("Gálatas", 6);
-            books.put("Efesios", 6);
-            books.put("Filipenses", 4);
-            books.put("Colosenses", 4);
-            books.put("1 Tesalonicenses", 5);
-            books.put("2 Tesalonicenses", 3);
-            books.put("1 Timoteo", 6);
-            books.put("2 Timoteo", 4);
-            books.put("Tito", 3);
-            books.put("Filemón", 1);
-            books.put("Hebreos", 13);
-            books.put("Santiago", 5);
-            books.put("1 Pedro", 5);
-            books.put("2 Pedro", 3);
-            books.put("1 Juan", 5);
-            books.put("2 Juan", 1);
-            books.put("3 Juan", 1);
-            books.put("Judas", 1);
-            books.put("Revelación", 22);
-            break;
-        case 4:
-            books.put("1. Mose", 50);
-            books.put("2. Mose", 40);
-            books.put("3. Mose", 27);
-            books.put("4. Mose", 36);
-            books.put("5. Mose", 34);
-            books.put("Josua", 24);
-            books.put("Richter", 21);
-            books.put("Ruth", 4);
-            books.put("1. Samuel", 31);
-            books.put("2. Samuel", 24);
-            books.put("1. Könige", 22);
-            books.put("2. Könige", 25);
-            books.put("1. Chronika", 29);
-            books.put("2. Chronika", 36);
-            books.put("Esra", 10);
-            books.put("Nehemia", 13);
-            books.put("Esther", 10);
-            books.put("Hiob", 42);
-            books.put("Psalm", 150);
-            books.put("Sprüche", 31);
-            books.put("Prediger", 12);
-            books.put("Hohes Lied", 8);
-            books.put("Jesaja", 66);
-            books.put("Jeremia", 52);
-            books.put("Klagelieder", 5);
-            books.put("Hesekiel", 48);
-            books.put("Daniel", 12);
-            books.put("Hosea", 14);
-            books.put("Joel", 3);
-            books.put("Amos", 9);
-            books.put("Obadja", 1);
-            books.put("Jona", 4);
-            books.put("Micha", 7);
-            books.put("Nahum", 3);
-            books.put("Habakuk", 3);
-            books.put("Zephanja", 3);
-            books.put("Haggai", 2);
-            books.put("Sacharja", 14);
-            books.put("Maleachi", 4);
-            books.put("Matthäus", 28);
-            books.put("Markus", 16);
-            books.put("Lukas", 24);
-            books.put("Johannes", 21);
-            books.put("Apostelgeschichte", 28);
-            books.put("Römer", 16);
-            books.put("1. Korinther", 16);
-            books.put("2. Korinther", 13);
-            books.put("Galater", 6);
-            books.put("Epheser", 6);
-            books.put("Philipper", 4);
-            books.put("Kolosser", 4);
-            books.put("1. Thessalonicher", 5);
-            books.put("2. Thessalonicher", 3);
-            books.put("1. Timotheus", 6);
-            books.put("2. Timotheus", 4);
-            books.put("Titus", 3);
-            books.put("Philemon", 1);
-            books.put("Hebräer", 13);
-            books.put("Jakobus", 5);
-            books.put("1. Petrus", 5);
-            books.put("2. Petrus", 3);
-            books.put("1. Johannes", 5);
-            books.put("2. Johannes", 1);
-            books.put("3. Johannes", 1);
-            books.put("Judas", 1);
-            books.put("Offenbarung", 22);
-            break;
-        case 5:
-            books.put("Gênesis", 50);
-            books.put("Êxodo", 40);
-            books.put("Levítico", 27);
-            books.put("Números", 36);
-            books.put("Deuteronômio", 34);
-            books.put("Josué", 24);
-            books.put("Juízes", 21);
-            books.put("Rute", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Reis", 22);
-            books.put("2 Reis", 25);
-            books.put("1 Crônicas", 29);
-            books.put("2 Crônicas", 36);
-            books.put("Esdras", 10);
-            books.put("Neemias", 13);
-            books.put("Ester", 10);
-            books.put("Jó", 42);
-            books.put("Salmos", 150);
-            books.put("Provérbios", 31);
-            books.put("Eclesiastes", 12);
-            books.put("Cântico de Salomão", 8);
-            books.put("Isaías", 66);
-            books.put("Jeremias", 52);
-            books.put("Lamentações", 5);
-            books.put("Ezequiel", 48);
-            books.put("Daniel", 12);
-            books.put("Oseias", 14);
-            books.put("Joel", 3);
-            books.put("Amós", 9);
-            books.put("Obadias", 1);
-            books.put("Jonas", 4);
-            books.put("Miqueias", 7);
-            books.put("Naum", 3);
-            books.put("Habacuque", 3);
-            books.put("Sofonias", 3);
-            books.put("Ageu", 2);
-            books.put("Zacarias", 14);
-            books.put("Malaquias", 4);
-            books.put("Mateus", 28);
-            books.put("Marcos", 16);
-            books.put("Lucas", 24);
-            books.put("João", 21);
-            books.put("Atos", 28);
-            books.put("Romanos", 16);
-            books.put("1 Coríntios", 16);
-            books.put("2 Coríntios", 13);
-            books.put("Gálatas", 6);
-            books.put("Efésios", 6);
-            books.put("Filipenses", 4);
-            books.put("Colossenses", 4);
-            books.put("1 Tessalonicenses", 5);
-            books.put("2 Tessalonicenses", 3);
-            books.put("1 Timóteo", 6);
-            books.put("2 Timóteo", 4);
-            books.put("Tito", 3);
-            books.put("Filêmon", 1);
-            books.put("Hebreus", 13);
-            books.put("Tiago", 5);
-            books.put("1 Pedro", 5);
-            books.put("2 Pedro", 3);
-            books.put("1 João", 5);
-            books.put("2 João", 1);
-            books.put("3 João", 1);
-            books.put("Judas", 1);
-            books.put("Revelação", 22);
-            break;
-        case 6:
-            books.put("Genesi", 50);
-            books.put("Esodo", 40);
-            books.put("Levitico", 27);
-            books.put("Numeri", 36);
-            books.put("Deuteronomio", 34);
-            books.put("Giosuè", 24);
-            books.put("Giudici", 21);
-            books.put("Rut", 4);
-            books.put("1 Samuele", 31);
-            books.put("2 Samuele", 24);
-            books.put("1 Re", 22);
-            books.put("2 Re", 25);
-            books.put("1 Cronache", 29);
-            books.put("2 Cronache", 36);
-            books.put("Esdra", 10);
-            books.put("Neemia", 13);
-            books.put("Ester", 10);
-            books.put("Giobbe", 42);
-            books.put("Salmi", 150);
-            books.put("Proverbi", 31);
-            books.put("Ecclesiaste", 12);
-            books.put("Il Cantico dei Cantici", 8);
-            books.put("Isaia", 66);
-            books.put("Geremia", 52);
-            books.put("Lamentazioni", 5);
-            books.put("Ezechiele", 48);
-            books.put("Daniele", 12);
-            books.put("Osea", 14);
-            books.put("Gioele", 3);
-            books.put("Amos", 9);
-            books.put("Abdia", 1);
-            books.put("Giona", 4);
-            books.put("Michea", 7);
-            books.put("Naum", 3);
-            books.put("Abacuc", 3);
-            books.put("Sofonia", 3);
-            books.put("Aggeo", 2);
-            books.put("Zaccaria", 14);
-            books.put("Malachia", 4);
-            books.put("Matteo", 28);
-            books.put("Marco", 16);
-            books.put("Luca", 24);
-            books.put("Giovanni", 21);
-            books.put("Atti", 28);
-            books.put("Romani", 16);
-            books.put("1 Corinti", 16);
-            books.put("2 Corinti", 13);
-            books.put("Galati", 6);
-            books.put("Efesini", 6);
-            books.put("Filippesi", 4);
-            books.put("Colossesi", 4);
-            books.put("1 Tessalonicesi", 5);
-            books.put("2 Tessalonicesi", 3);
-            books.put("1 Timoteo", 6);
-            books.put("2 Timoteo", 4);
-            books.put("Tito", 3);
-            books.put("Filemone", 1);
-            books.put("Ebrei", 13);
-            books.put("Giacomo", 5);
-            books.put("1 Pietro", 5);
-            books.put("2 Pietro", 3);
-            books.put("1 Giovanni", 5);
-            books.put("2 Giovanni", 1);
-            books.put("3 Giovanni", 1);
-            books.put("Giuda", 1);
-            books.put("Rivelazione", 22);
-            break;
-        case 7:
-            books.put("Γένεση", 50);
-            books.put("Έξοδος", 40);
-            books.put("Λευιτικό", 27);
-            books.put("Αριθμοί", 36);
-            books.put("Δευτερονόμιο", 34);
-            books.put("Ιησούς του Ναυή", 24);
-            books.put("Κριτές", 21);
-            books.put("Ρουθ", 4);
-            books.put("1 Σαμουήλ", 31);
-            books.put("2 Σαμουήλ", 24);
-            books.put("1 Βασιλέων", 22);
-            books.put("2 Βασιλέων", 25);
-            books.put("1 Χρονικών", 29);
-            books.put("2 Χρονικών", 36);
-            books.put("Έσδρας", 10);
-            books.put("Νεεμίας", 13);
-            books.put("Εσθήρ", 10);
-            books.put("Ιώβ", 42);
-            books.put("Ψαλμοί", 150);
-            books.put("Παροιμίες", 31);
-            books.put("Εκκλησιαστής", 12);
-            books.put("Άσμα Ασμάτων", 8);
-            books.put("Ησαΐας", 66);
-            books.put("Ιερεμίας", 52);
-            books.put("Θρήνοι", 5);
-            books.put("Ιεζεκιήλ", 48);
-            books.put("Δανιήλ", 12);
-            books.put("Ωσηέ", 14);
-            books.put("Ιωήλ", 3);
-            books.put("Αμώς", 9);
-            books.put("Αβδιού", 1);
-            books.put("Ιωνάς", 4);
-            books.put("Μιχαίας", 7);
-            books.put("Ναούμ", 3);
-            books.put("Αββακούμ", 3);
-            books.put("Σοφονίας", 3);
-            books.put("Αγγαίος", 2);
-            books.put("Ζαχαρίας", 14);
-            books.put("Μαλαχίας", 4);
-            books.put("Ματθαίος", 28);
-            books.put("Μάρκος", 16);
-            books.put("Λουκάς", 24);
-            books.put("Ιωάννης", 21);
-            books.put("Πράξεις", 28);
-            books.put("Ρωμαίους", 16);
-            books.put("1 Κορινθίους", 16);
-            books.put("2 Κορινθίους", 13);
-            books.put("Γαλάτες", 6);
-            books.put("Εφεσίους", 6);
-            books.put("Φιλιππησίους", 4);
-            books.put("Κολοσσαείς", 4);
-            books.put("1 Θεσσαλονικείς", 5);
-            books.put("2 Θεσσαλονικείς", 3);
-            books.put("1 Τιμόθεο", 6);
-            books.put("2 Τιμόθεο", 4);
-            books.put("Τίτο", 3);
-            books.put("Φιλήμονα", 1);
-            books.put("Εβραίους", 13);
-            books.put("Ιακώβου", 5);
-            books.put("1 Πέτρου", 5);
-            books.put("2 Πέτρου", 3);
-            books.put("1 Ιωάννη", 5);
-            books.put("2 Ιωάννη", 1);
-            books.put("3 Ιωάννη", 1);
-            books.put("Ιούδα", 1);
-            books.put("Αποκάλυψη", 22);
-            break;
-        case 8:
-            books.put("Genesis", 50);
-            books.put("Exodo", 40);
-            books.put("Levitico", 27);
-            books.put("Bilang", 36);
-            books.put("Deuteronomio", 34);
-            books.put("Josue", 24);
-            books.put("Hukom", 21);
-            books.put("Ruth", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Hari", 22);
-            books.put("2 Hari", 25);
-            books.put("1 Cronica", 29);
-            books.put("2 Cronica", 36);
-            books.put("Ezra", 10);
-            books.put("Nehemias", 13);
-            books.put("Esther", 10);
-            books.put("Job", 42);
-            books.put("MgaAwit", 150);
-            books.put("Kawikaan", 31);
-            books.put("Eclesiastes", 12);
-            books.put("Awit ni Solomon", 8);
-            books.put("Isaias", 66);
-            books.put("Jeremias", 52);
-            books.put("Panaghoy", 5);
-            books.put("Ezekiel", 48);
-            books.put("Daniel", 12);
-            books.put("Oseas", 14);
-            books.put("Joel", 3);
-            books.put("Amos", 9);
-            books.put("Obadias", 1);
-            books.put("Jonas", 4);
-            books.put("Mikas", 7);
-            books.put("Nahum", 3);
-            books.put("Habakuk", 3);
-            books.put("Zefanias", 3);
-            books.put("Hagai", 2);
-            books.put("Zacarias", 14);
-            books.put("Malakias", 4);
-            books.put("Mateo", 28);
-            books.put("Marcos", 16);
-            books.put("Lucas", 24);
-            books.put("Juan", 21);
-            books.put("Gawa", 28);
-            books.put("Roma", 16);
-            books.put("1 Corinto", 16);
-            books.put("2 Corinto", 13);
-            books.put("Galacia", 6);
-            books.put("Efeso", 6);
-            books.put("Filipos", 4);
-            books.put("Colosas", 4);
-            books.put("1 Tesalonica", 5);
-            books.put("2 Tesalonica", 3);
-            books.put("1 Timoteo", 6);
-            books.put("2 Timoteo", 4);
-            books.put("Tito", 3);
-            books.put("Filemon", 1);
-            books.put("Hebreo", 13);
-            books.put("Santiago", 5);
-            books.put("1 Pedro", 5);
-            books.put("2 Pedro", 3);
-            books.put("1 Juan", 5);
-            books.put("2 Juan", 1);
-            books.put("3 Juan", 1);
-            books.put("Judas", 1);
-            books.put("Apocalipsis", 22);
-            break;
-        case 9:
-            books.put("Geneza", 50);
-            books.put("Exodul", 40);
-            books.put("Leviticul", 27);
-            books.put("Numerele", 36);
-            books.put("Deuteronomul", 34);
-            books.put("Iosua", 24);
-            books.put("Judecătorii", 21);
-            books.put("Rut", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Regi", 22);
-            books.put("2 Regi", 25);
-            books.put("1 Cronici", 29);
-            books.put("2 Cronici", 36);
-            books.put("Ezra", 10);
-            books.put("Neemia", 13);
-            books.put("Estera", 10);
-            books.put("Iov", 42);
-            books.put("Psalmii", 150);
-            books.put("Proverbele", 31);
-            books.put("Eclesiastul", 12);
-            books.put("Cântarea Cântărilor", 8);
-            books.put("Isaia", 66);
-            books.put("Ieremia", 52);
-            books.put("Plângerile", 5);
-            books.put("Ezechiel", 48);
-            books.put("Daniel", 12);
-            books.put("Osea", 14);
-            books.put("Ioel", 3);
-            books.put("Amos", 9);
-            books.put("Obadia", 1);
-            books.put("Iona", 4);
-            books.put("Mica", 7);
-            books.put("Naum", 3);
-            books.put("Habacuc", 3);
-            books.put("Ţefania", 3);
-            books.put("Hagai", 2);
-            books.put("Zaharia", 14);
-            books.put("Maleahi", 4);
-            books.put("Matei", 28);
-            books.put("Marcu", 16);
-            books.put("Luca", 24);
-            books.put("Ioan", 21);
-            books.put("Faptele", 28);
-            books.put("Romani", 16);
-            books.put("1 Corinteni", 16);
-            books.put("2 Corinteni", 13);
-            books.put("Galateni", 6);
-            books.put("Efeseni", 6);
-            books.put("Filipeni", 4);
-            books.put("Coloseni", 4);
-            books.put("1 Tesaloniceni", 5);
-            books.put("2 Tesaloniceni", 3);
-            books.put("1 Timotei", 6);
-            books.put("2 Timotei", 4);
-            books.put("Tit", 3);
-            books.put("Filimon", 1);
-            books.put("Evrei", 13);
-            books.put("Iacov", 5);
-            books.put("1 Petru", 5);
-            books.put("2 Petru", 3);
-            books.put("1 Ioan", 5);
-            books.put("2 Ioan", 1);
-            books.put("3 Ioan", 1);
-            books.put("Iuda", 1);
-            books.put("Revelaţia", 22);
-            break;
-        case 10:
-            books.put("1Mózes", 50);
-            books.put("2Mózes", 40);
-            books.put("3Mózes", 27);
-            books.put("4Mózes", 36);
-            books.put("5Mózes", 34);
-            books.put("Józsué", 24);
-            books.put("Bírák", 21);
-            books.put("Ruth", 4);
-            books.put("1Sámuel", 31);
-            books.put("2Sámuel", 24);
-            books.put("1Királyok", 22);
-            books.put("2Királyok", 25);
-            books.put("1Krónikák", 29);
-            books.put("2Krónikák", 36);
-            books.put("Ezsdrás", 10);
-            books.put("Nehémiás", 13);
-            books.put("Eszter", 10);
-            books.put("Jób", 42);
-            books.put("Zsoltárok", 150);
-            books.put("Példabeszédek", 31);
-            books.put("Prédikátor", 12);
-            books.put("Énekek éneke", 8);
-            books.put("Ézsaiás", 66);
-            books.put("Jeremiás", 52);
-            books.put("Siralmak", 5);
-            books.put("Ezékiel", 48);
-            books.put("Dániel", 12);
-            books.put("Hóseás", 14);
-            books.put("Jóel", 3);
-            books.put("Ámós", 9);
-            books.put("Abdiás", 1);
-            books.put("Jónás", 4);
-            books.put("Mikeás", 7);
-            books.put("Náhum", 3);
-            books.put("Habakuk", 3);
-            books.put("Sofóniás", 3);
-            books.put("Aggeus", 2);
-            books.put("Zakariás", 14);
-            books.put("Malakiás", 4);
-            books.put("Máté", 28);
-            books.put("Márk", 16);
-            books.put("Lukács", 24);
-            books.put("János", 21);
-            books.put("Cselekedetek", 28);
-            books.put("Róma", 16);
-            books.put("1Korintusz", 16);
-            books.put("2Korintusz", 13);
-            books.put("Galácia", 6);
-            books.put("Efézus", 6);
-            books.put("Filippi", 4);
-            books.put("Kolosszé", 4);
-            books.put("1Tesszalonika", 5);
-            books.put("2Tesszalonika", 3);
-            books.put("1Timóteusz", 6);
-            books.put("2Timóteusz", 4);
-            books.put("Titusz", 3);
-            books.put("Filemon", 1);
-            books.put("Héberek", 13);
-            books.put("Jakab", 5);
-            books.put("1Péter", 5);
-            books.put("2Péter", 3);
-            books.put("1János", 5);
-            books.put("2János", 1);
-            books.put("3János", 1);
-            books.put("Júdás", 1);
-            books.put("Jelenések", 22);
-            break;
-        case 11:
-            books.put("Буття", 50);
-            books.put("Вихід", 40);
-            books.put("Левіт", 27);
-            books.put("Числа", 36);
-            books.put("Повторення Закону", 34);
-            books.put("Ісуса Навина", 24);
-            books.put("Суддів", 21);
-            books.put("Рут", 4);
-            books.put("1 Самуїла", 31);
-            books.put("2 Самуїла", 24);
-            books.put("1 Царів", 22);
-            books.put("2 Царів", 25);
-            books.put("1 Хронік", 29);
-            books.put("2 Хронік", 36);
-            books.put("Ездри", 10);
-            books.put("Неемії", 13);
-            books.put("Естер", 10);
-            books.put("Йова", 42);
-            books.put("Псалми", 150);
-            books.put("Прислів’я", 31);
-            books.put("Екклезіаста", 12);
-            books.put("Пісня над піснями", 8);
-            books.put("Ісаї", 66);
-            books.put("Єремії", 52);
-            books.put("Плач Єремії", 5);
-            books.put("Єзекіїля", 48);
-            books.put("Даниїла", 12);
-            books.put("Осії", 14);
-            books.put("Йоіла", 3);
-            books.put("Амоса", 9);
-            books.put("Овдія", 1);
-            books.put("Йони", 4);
-            books.put("Михея", 7);
-            books.put("Наума", 3);
-            books.put("Авакума", 3);
-            books.put("Софонії", 3);
-            books.put("Огія", 2);
-            books.put("Захарія", 14);
-            books.put("Малахії", 4);
-            books.put("Матвія", 28);
-            books.put("Марка", 16);
-            books.put("Луки", 24);
-            books.put("Івана", 21);
-            books.put("Дії", 28);
-            books.put("Римлян", 16);
-            books.put("1 Коринфян", 16);
-            books.put("2 Коринфян", 13);
-            books.put("Галатів", 6);
-            books.put("Ефесян", 6);
-            books.put("Філіппійців", 4);
-            books.put("Колоссян", 4);
-            books.put("1 Фессалонікійців", 5);
-            books.put("2 Фессалонікійців", 3);
-            books.put("1 Тимофія", 6);
-            books.put("2 Тимофія", 4);
-            books.put("Тита", 3);
-            books.put("Филимона", 1);
-            books.put("Євреїв", 13);
-            books.put("Якова", 5);
-            books.put("1 Петра", 5);
-            books.put("2 Петра", 3);
-            books.put("1 Івана", 5);
-            books.put("2 Івана", 1);
-            books.put("3 Івана", 1);
-            books.put("Юди", 1);
-            books.put("Об’явлення", 22);
-            break;
-        case 12:
-            books.put("Бытие", 50);
-            books.put("Исход", 40);
-            books.put("Левит", 27);
-            books.put("Числа", 36);
-            books.put("Второзаконие", 34);
-            books.put("Иисус Навин", 24);
-            books.put("Судей", 21);
-            books.put("Руфь", 4);
-            books.put("1 Самуила", 31);
-            books.put("2 Самуила", 24);
-            books.put("1 Царей", 22);
-            books.put("2 Царей", 25);
-            books.put("1 Летопись", 29);
-            books.put("2 Летопись", 36);
-            books.put("Ездра", 10);
-            books.put("Неемия", 13);
-            books.put("Эсфирь", 10);
-            books.put("Иов", 42);
-            books.put("Псалом", 150);
-            books.put("Притчи", 31);
-            books.put("Экклезиаст", 12);
-            books.put("Песнь песней", 8);
-            books.put("Исаия", 66);
-            books.put("Иеремия", 52);
-            books.put("Плач Иеремии", 5);
-            books.put("Иезекииль", 48);
-            books.put("Даниил", 12);
-            books.put("Осия", 14);
-            books.put("Иоиль", 3);
-            books.put("Амос", 9);
-            books.put("Авдий", 1);
-            books.put("Иона", 4);
-            books.put("Михей", 7);
-            books.put("Наум", 3);
-            books.put("Аввакум", 3);
-            books.put("Софония", 3);
-            books.put("Аггей", 2);
-            books.put("Захария", 14);
-            books.put("Малахия", 4);
-            books.put("Матфея", 28);
-            books.put("Марка", 16);
-            books.put("Луки", 24);
-            books.put("Иоанна", 21);
-            books.put("Деяния", 28);
-            books.put("Римлянам", 16);
-            books.put("1 Коринфянам", 16);
-            books.put("2 Коринфянам", 13);
-            books.put("Галатам", 6);
-            books.put("Эфесянам", 6);
-            books.put("Филиппийцам", 4);
-            books.put("Колоссянам", 4);
-            books.put("1 Фессалоникийцам", 5);
-            books.put("2 Фессалоникийцам", 3);
-            books.put("1 Тимофею", 6);
-            books.put("2 Тимофею", 4);
-            books.put("Титу", 3);
-            books.put("Филимону", 1);
-            books.put("Евреям", 13);
-            books.put("Иакова", 5);
-            books.put("1 Петра", 5);
-            books.put("2 Петра", 3);
-            books.put("1 Иоанна", 5);
-            books.put("2 Иоанна", 1);
-            books.put("3 Иоанна", 1);
-            books.put("Иуды", 1);
-            books.put("Откровение", 22);
-            break;
-        case 13:
-            books.put("创世记", 50);
-            books.put("出埃及记", 40);
-            books.put("利未记", 27);
-            books.put("民数记", 36);
-            books.put("申命记", 34);
-            books.put("约书亚记", 24);
-            books.put("士师记", 21);
-            books.put("路得记", 4);
-            books.put("撒母耳记上", 31);
-            books.put("撒母耳记下", 24);
-            books.put("列王纪上", 22);
-            books.put("列王纪下", 25);
-            books.put("历代志上", 29);
-            books.put("历代志下", 36);
-            books.put("以斯拉记", 10);
-            books.put("尼希米记", 13);
-            books.put("以斯帖记", 10);
-            books.put("约伯记", 42);
-            books.put("诗篇", 150);
-            books.put("箴言", 31);
-            books.put("传道书", 12);
-            books.put("雅歌", 8);
-            books.put("以赛亚书", 66);
-            books.put("耶利米书", 52);
-            books.put("耶利米哀歌", 5);
-            books.put("以西结书", 48);
-            books.put("但以理书", 12);
-            books.put("何西阿书", 14);
-            books.put("约珥书", 3);
-            books.put("阿摩司书", 9);
-            books.put("俄巴底亚书", 1);
-            books.put("约拿书", 4);
-            books.put("弥迦书", 7);
-            books.put("那鸿书", 3);
-            books.put("哈巴谷书", 3);
-            books.put("西番雅书", 3);
-            books.put("哈该书", 2);
-            books.put("撒迦利亚书", 14);
-            books.put("玛拉基书", 4);
-            books.put("马太福音", 28);
-            books.put("马可福音", 16);
-            books.put("路加福音", 24);
-            books.put("约翰福音", 21);
-            books.put("使徒行传", 28);
-            books.put("罗马书", 16);
-            books.put("哥林多前书", 16);
-            books.put("哥林多后书", 13);
-            books.put("加拉太书", 6);
-            books.put("以弗所书", 6);
-            books.put("腓立比书", 4);
-            books.put("歌罗西书", 4);
-            books.put("帖撒罗尼迦前书", 5);
-            books.put("帖撒罗尼迦后书", 3);
-            books.put("提摩太前书", 6);
-            books.put("提摩太后书", 4);
-            books.put("提多书", 3);
-            books.put("腓利门书", 1);
-            books.put("希伯来书", 13);
-            books.put("雅各书", 5);
-            books.put("彼得前书", 5);
-            books.put("彼得后书", 3);
-            books.put("约翰一书", 5);
-            books.put("约翰二书", 1);
-            books.put("约翰三书", 1);
-            books.put("犹大书", 1);
-            books.put("启示录", 22);
-            break;
-        case 14:
-            books.put("1. Mojzesova", 50);
-            books.put("2. Mojzesova", 40);
-            books.put("3. Mojzesova", 27);
-            books.put("4. Mojzesova", 36);
-            books.put("5. Mojzesova", 34);
-            books.put("Jozue", 24);
-            books.put("Sodniki", 21);
-            books.put("Ruta", 4);
-            books.put("1. Samuelova", 31);
-            books.put("2. Samuelova", 24);
-            books.put("1. kraljev", 22);
-            books.put("2. kraljev", 25);
-            books.put("1. kroniška", 29);
-            books.put("2. kroniška", 36);
-            books.put("Ezra", 10);
-            books.put("Nehemija", 13);
-            books.put("Estera", 10);
-            books.put("Job", 42);
-            books.put("Psalm", 150);
-            books.put("Pregovori", 31);
-            books.put("Pridigar", 12);
-            books.put("Visoka pesem", 8);
-            books.put("Izaija", 66);
-            books.put("Jeremija", 52);
-            books.put("Žalostinke", 5);
-            books.put("Ezekiel", 48);
-            books.put("Daniel", 12);
-            books.put("Ozej", 14);
-            books.put("Joel", 3);
-            books.put("Amos", 9);
-            books.put("Obadija", 1);
-            books.put("Jona", 4);
-            books.put("Miha", 7);
-            books.put("Nahum", 3);
-            books.put("Habakuk", 3);
-            books.put("Zefanija", 3);
-            books.put("Hagaj", 2);
-            books.put("Zaharija", 14);
-            books.put("Malahija", 4);
-            books.put("Matej", 28);
-            books.put("Marko", 16);
-            books.put("Luka", 24);
-            books.put("Janez", 21);
-            books.put("Apostolska dela", 28);
-            books.put("Rimljanom", 16);
-            books.put("1. Korinčanom", 16);
-            books.put("2. Korinčanom", 13);
-            books.put("Galačanom", 6);
-            books.put("Efežanom", 6);
-            books.put("Filipljanom", 4);
-            books.put("Kološanom", 4);
-            books.put("1. Tesaloničanom", 5);
-            books.put("2. Tesaloničanom", 3);
-            books.put("1. Timoteju", 6);
-            books.put("2. Timoteju", 4);
-            books.put("Titu", 3);
-            books.put("Filemonu", 1);
-            books.put("Hebrejcem", 13);
-            books.put("Jakob", 5);
-            books.put("1. Petrovo", 5);
-            books.put("2. Petrovo", 3);
-            books.put("1. Janezovo", 5);
-            books.put("2. Janezovo", 1);
-            books.put("3. Janezovo", 1);
-            books.put("Juda", 1);
-            books.put("Razodetje", 22);
-            break;
-        case 15:
-            books.put("창세기", 50);
-            books.put("출애굽기", 40);
-            books.put("레위기", 27);
-            books.put("민수기", 36);
-            books.put("신명기", 34);
-            books.put("여호수아", 24);
-            books.put("사사기", 21);
-            books.put("룻기", 4);
-            books.put("사무엘상", 31);
-            books.put("사무엘하", 24);
-            books.put("열왕기상", 22);
-            books.put("열왕기하", 25);
-            books.put("역대기상", 29);
-            books.put("역대기하", 36);
-            books.put("에스라", 10);
-            books.put("느헤미야", 13);
-            books.put("에스더", 10);
-            books.put("욥기", 42);
-            books.put("시편", 150);
-            books.put("잠언", 31);
-            books.put("전도서", 12);
-            books.put("솔로몬의 노래", 8);
-            books.put("이사야", 66);
-            books.put("예레미야", 52);
-            books.put("예레미야 애가", 5);
-            books.put("에스겔", 48);
-            books.put("다니엘", 12);
-            books.put("호세아", 14);
-            books.put("요엘", 3);
-            books.put("아모스", 9);
-            books.put("오바댜", 1);
-            books.put("요나", 4);
-            books.put("미가", 7);
-            books.put("나훔", 3);
-            books.put("하박국", 3);
-            books.put("스바냐", 3);
-            books.put("학개", 2);
-            books.put("스가랴", 14);
-            books.put("말라기", 4);
-            books.put("마태복음", 28);
-            books.put("마가복음", 16);
-            books.put("누가복음", 24);
-            books.put("요한복음", 21);
-            books.put("사도행전", 28);
-            books.put("로마서", 16);
-            books.put("고린도 전서", 16);
-            books.put("고린도 후서", 13);
-            books.put("갈라디아서", 6);
-            books.put("에베소서", 6);
-            books.put("빌립보서", 4);
-            books.put("골로새서", 4);
-            books.put("데살로니가 전서", 5);
-            books.put("데살로니가 후서", 3);
-            books.put("디모데 전서", 6);
-            books.put("디모데 후서", 4);
-            books.put("디도서", 3);
-            books.put("빌레몬서", 1);
-            books.put("히브리서", 13);
-            books.put("야고보서", 5);
-            books.put("베드로 전서", 5);
-            books.put("베드로 후서", 3);
-            books.put("요한 1서", 5);
-            books.put("요한 2서", 1);
-            books.put("요한 3서", 1);
-            books.put("유다서", 1);
-            books.put("요한 계시록", 22);
-            break;
-        case 16:
-            books.put("Rodzaju", 50);
-            books.put("Wyjścia", 40);
-            books.put("Kapłańska", 27);
-            books.put("Liczb", 36);
-            books.put("Powtórzonego Prawa", 34);
-            books.put("Jozuego", 24);
-            books.put("Sędziów", 21);
-            books.put("Rut", 4);
-            books.put("1 Samuela", 31);
-            books.put("2 Samuela", 24);
-            books.put("1 Królów", 22);
-            books.put("2 Królów", 25);
-            books.put("1 Kronik", 29);
-            books.put("2 Kronik", 36);
-            books.put("Ezdrasza", 10);
-            books.put("Nehemiasza", 13);
-            books.put("Estery", 10);
-            books.put("Hioba", 42);
-            books.put("Psalmy", 150);
-            books.put("Przysłów", 31);
-            books.put("Kaznodziei", 12);
-            books.put("Pieśń", 8);
-            books.put("Izajasza", 66);
-            books.put("Jeremiasza", 52);
-            books.put("Lamentacje", 5);
-            books.put("Ezechiela", 48);
-            books.put("Daniela", 12);
-            books.put("Ozeasza", 14);
-            books.put("Joela", 3);
-            books.put("Amosa", 9);
-            books.put("Abdiasza", 1);
-            books.put("Jonasza", 4);
-            books.put("Micheasza", 7);
-            books.put("Nahuma", 3);
-            books.put("Habakuka", 3);
-            books.put("Sofoniasza", 3);
-            books.put("Aggeusza", 2);
-            books.put("Zachariasza", 14);
-            books.put("Malachiasza", 4);
-            books.put("Mateusza", 28);
-            books.put("Marka", 16);
-            books.put("Łukasza", 24);
-            books.put("Jana", 21);
-            books.put("Dzieje", 28);
-            books.put("Rzymian", 16);
-            books.put("1 Koryntian", 16);
-            books.put("2 Koryntian", 13);
-            books.put("Galatów", 6);
-            books.put("Efezjan", 6);
-            books.put("Filipian", 4);
-            books.put("Kolosan", 4);
-            books.put("1 Tesaloniczan", 5);
-            books.put("2 Tesaloniczan", 3);
-            books.put("1 Tymoteusza", 6);
-            books.put("2 Tymoteusza", 4);
-            books.put("Tytusa", 3);
-            books.put("Filemona", 1);
-            books.put("Hebrajczyków", 13);
-            books.put("Jakuba", 5);
-            books.put("1 Piotra", 5);
-            books.put("2 Piotra", 3);
-            books.put("1 Jana", 5);
-            books.put("2 Jana", 1);
-            books.put("3 Jana", 1);
-            books.put("Judy", 1);
-            books.put("Objawienie", 22);
-            break;
-        case 17:
-            books.put("1. Mojžišova", 50);
-            books.put("2. Mojžišova", 40);
-            books.put("3. Mojžišova", 27);
-            books.put("4. Mojžišova", 36);
-            books.put("5. Mojžišova", 34);
-            books.put("Jozua", 24);
-            books.put("Sudcovia", 21);
-            books.put("Rút", 4);
-            books.put("1. Samuelova", 31);
-            books.put("2. Samuelova", 24);
-            books.put("1. Kráľov", 22);
-            books.put("2. Kráľov", 25);
-            books.put("1. Paralipomenon", 29);
-            books.put("2. Paralipomenon", 36);
-            books.put("Ezdráš", 10);
-            books.put("Nehemiáš", 13);
-            books.put("Ester", 10);
-            books.put("Jób", 42);
-            books.put("Žalmy", 150);
-            books.put("Príslovia", 31);
-            books.put("Kazateľ", 12);
-            books.put("Šalamúnova pieseň", 8);
-            books.put("Izaiáš", 66);
-            books.put("Jeremiáš", 52);
-            books.put("Plač Jeremiáša", 5);
-            books.put("Ezechiel", 48);
-            books.put("Daniel", 12);
-            books.put("Hozeáš", 14);
-            books.put("Joel", 3);
-            books.put("Ámos", 9);
-            books.put("Obadiáš", 1);
-            books.put("Jonáš", 4);
-            books.put("Micheáš", 7);
-            books.put("Náhum", 3);
-            books.put("Habakuk", 3);
-            books.put("Sofoniáš", 3);
-            books.put("Haggeus", 2);
-            books.put("Zechariáš", 14);
-            books.put("Malachiáš", 4);
-            books.put("Matúš", 28);
-            books.put("Marek", 16);
-            books.put("Lukáš", 24);
-            books.put("Ján", 21);
-            books.put("Skutky", 28);
-            books.put("Rimanom", 16);
-            books.put("1. Korinťanom", 16);
-            books.put("2. Korinťanom", 13);
-            books.put("Galaťanom", 6);
-            books.put("Efezanom", 6);
-            books.put("Filipanom", 4);
-            books.put("Kolosanom", 4);
-            books.put("1. Tesaloničanom", 5);
-            books.put("2. Tesaloničanom", 3);
-            books.put("1. Timotejovi", 6);
-            books.put("2. Timotejovi", 4);
-            books.put("Títovi", 3);
-            books.put("Filémonovi", 1);
-            books.put("Hebrejom", 13);
-            books.put("Jakub", 5);
-            books.put("1. Petra", 5);
-            books.put("2. Petra", 3);
-            books.put("1. Jána", 5);
-            books.put("2. Jána", 1);
-            books.put("3. Jána", 1);
-            books.put("Júda", 1);
-            books.put("Zjavenie", 22);
-            break;
-        case 18:
-            books.put("Jenèz", 50);
-            books.put("Egzòd", 40);
-            books.put("Levitik", 27);
-            books.put("Nonb", 36);
-            books.put("Detewonòm", 34);
-            books.put("Jozye", 24);
-            books.put("Jij", 21);
-            books.put("Rit", 4);
-            books.put("1 Samyèl", 31);
-            books.put("2 Samyèl", 24);
-            books.put("1 Wa", 22);
-            books.put("2 Wa", 25);
-            books.put("1 Kwonik", 29);
-            books.put("2 Kwonik", 36);
-            books.put("Esdras", 10);
-            books.put("Neyemi", 13);
-            books.put("Estè", 10);
-            books.put("Jòb", 42);
-            books.put("Sòm", 150);
-            books.put("Pwovèb", 31);
-            books.put("Eklezyas", 12);
-            books.put("Chante Salomon an", 8);
-            books.put("Ezayi", 66);
-            books.put("Jeremi", 52);
-            books.put("Lamantasyon", 5);
-            books.put("Ezekyèl", 48);
-            books.put("Dànyèl", 12);
-            books.put("Oze", 14);
-            books.put("Jowèl", 3);
-            books.put("Amòs", 9);
-            books.put("Obadya", 1);
-            books.put("Jonas", 4);
-            books.put("Miche", 7);
-            books.put("Nawoum", 3);
-            books.put("Abakouk", 3);
-            books.put("Sofoni", 3);
-            books.put("Aje", 2);
-            books.put("Zakari", 14);
-            books.put("Malachi", 4);
-            books.put("Matye", 28);
-            books.put("Mak", 16);
-            books.put("Lik", 24);
-            books.put("Jan", 21);
-            books.put("Travay", 28);
-            books.put("Women", 16);
-            books.put("1 Korentyen", 16);
-            books.put("2 Korentyen", 13);
-            books.put("Galat", 6);
-            books.put("Efezyen", 6);
-            books.put("Filipyen", 4);
-            books.put("Kolosyen", 4);
-            books.put("1 Tesalonisyen", 5);
-            books.put("2 Tesalonisyen", 3);
-            books.put("1 Timote", 6);
-            books.put("2 Timote", 4);
-            books.put("Tit", 3);
-            books.put("Filemon", 1);
-            books.put("Ebre", 13);
-            books.put("Jak", 5);
-            books.put("1 Pyè", 5);
-            books.put("2 Pyè", 3);
-            books.put("1 Jan", 5);
-            books.put("2 Jan", 1);
-            books.put("3 Jan", 1);
-            books.put("Jid", 1);
-            books.put("Revelasyon", 22);
-            break;
-        case 19:
-            books.put("Genesis", 50);
-            books.put("Exodo", 40);
-            books.put("Levitico", 27);
-            books.put("Numeros", 36);
-            books.put("Deuteronomio", 34);
-            books.put("Josue", 24);
-            books.put("Maghuhukom", 21);
-            books.put("Ruth", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Hari", 22);
-            books.put("2 Hari", 25);
-            books.put("1 Cronicas", 29);
-            books.put("2 Cronicas", 36);
-            books.put("Esdras", 10);
-            books.put("Nehemias", 13);
-            books.put("Ester", 10);
-            books.put("Job", 42);
-            books.put("Salmo", 150);
-            books.put("Proverbio", 31);
-            books.put("Ecclesiastes", 12);
-            books.put("Awit ni Solomon", 8);
-            books.put("Isaias", 66);
-            books.put("Jeremias", 52);
-            books.put("Lamentaciones", 5);
-            books.put("Ezequiel", 48);
-            books.put("Daniel", 12);
-            books.put("Oseas", 14);
-            books.put("Joel", 3);
-            books.put("Amos", 9);
-            books.put("Abdias", 1);
-            books.put("Jonas", 4);
-            books.put("Miqueas", 7);
-            books.put("Nahum", 3);
-            books.put("Habacuc", 3);
-            books.put("Sofonias", 3);
-            books.put("Haggeo", 2);
-            books.put("Zacarias", 14);
-            books.put("Malaquias", 4);
-            books.put("Mateo", 28);
-            books.put("Marcos", 16);
-            books.put("Lucas", 24);
-            books.put("Juan", 21);
-            books.put("Buhat", 28);
-            books.put("Roma", 16);
-            books.put("1 Corinto", 16);
-            books.put("2 Corinto", 13);
-            books.put("Galacia", 6);
-            books.put("Efeso", 6);
-            books.put("Filipos", 4);
-            books.put("Colosas", 4);
-            books.put("1 Tesalonica", 5);
-            books.put("2 Tesalonica", 3);
-            books.put("1 Timoteo", 6);
-            books.put("2 Timoteo", 4);
-            books.put("Tito", 3);
-            books.put("Filemon", 1);
-            books.put("Hebreohanon", 13);
-            books.put("Santiago", 5);
-            books.put("1 Pedro", 5);
-            books.put("2 Pedro", 3);
-            books.put("1 Juan", 5);
-            books.put("2 Juan", 1);
-            books.put("3 Juan", 1);
-            books.put("Judas", 1);
-            books.put("Pinadayag", 22);
-            break;
-        case 20:
-            books.put("Постанак", 50);
-            books.put("Излазак", 40);
-            books.put("Левитска", 27);
-            books.put("Бројеви", 36);
-            books.put("Поновљени закони", 34);
-            books.put("Исус Навин", 24);
-            books.put("Судије", 21);
-            books.put("Рута", 4);
-            books.put("1. Самуилова", 31);
-            books.put("2. Самуилова", 24);
-            books.put("1. Краљевима", 22);
-            books.put("2. Краљевима", 25);
-            books.put("1. Летописа", 29);
-            books.put("2. Летописа", 36);
-            books.put("Јездра", 10);
-            books.put("Немија", 13);
-            books.put("Јестира", 10);
-            books.put("Јов", 42);
-            books.put("Псалми", 150);
-            books.put("Пословице", 31);
-            books.put("Проповедник", 12);
-            books.put("Песма над песмама", 8);
-            books.put("Исаија", 66);
-            books.put("Јеремија", 52);
-            books.put("Тужбалице", 5);
-            books.put("Језекиљ", 48);
-            books.put("Данило", 12);
-            books.put("Осија", 14);
-            books.put("Јоило", 3);
-            books.put("Амос", 9);
-            books.put("Авдија", 1);
-            books.put("Јона", 4);
-            books.put("Михеј", 7);
-            books.put("Наум", 3);
-            books.put("Авакум", 3);
-            books.put("Софонија", 3);
-            books.put("Агеј", 2);
-            books.put("Захарија", 14);
-            books.put("Малахија", 4);
-            books.put("Матеј", 28);
-            books.put("Марко", 16);
-            books.put("Лука", 24);
-            books.put("Јован", 21);
-            books.put("Дела апостолска", 28);
-            books.put("Римљанима", 16);
-            books.put("1. Коринћанима", 16);
-            books.put("2. Коринћанима", 13);
-            books.put("Галатима", 6);
-            books.put("Ефешанима", 6);
-            books.put("Филипљанима", 4);
-            books.put("Колошанима", 4);
-            books.put("1. Солуњанима", 5);
-            books.put("2. Солуњанима", 3);
-            books.put("1. Тимотеју", 6);
-            books.put("2. Тимотеју", 4);
-            books.put("Титу", 3);
-            books.put("Филимону", 1);
-            books.put("Јеврејима", 13);
-            books.put("Јаковљева", 5);
-            books.put("1. Петрова", 5);
-            books.put("2. Петрова", 3);
-            books.put("1. Јованова", 5);
-            books.put("2. Јованова", 1);
-            books.put("3. Јованова", 1);
-            books.put("Јудина", 1);
-            books.put("Откривење", 22);
-            break;
-        case 21:
-            books.put("Битие", 50);
-            books.put("Изход", 40);
-            books.put("Левит", 27);
-            books.put("Числа", 36);
-            books.put("Второзаконие", 34);
-            books.put("Исус Навиев", 24);
-            books.put("Съдии", 21);
-            books.put("Рут", 4);
-            books.put("1 Книга на Царете", 31);
-            books.put("2 Книга на Царете", 24);
-            books.put("3 Книга на Царете", 22);
-            books.put("4 Книга на Царете", 25);
-            books.put("1 Книга на Летописите", 29);
-            books.put("2 Книга на Летописите", 36);
-            books.put("Ездра", 10);
-            books.put("Неемия", 13);
-            books.put("Естир", 10);
-            books.put("Йов", 42);
-            books.put("Псалм", 150);
-            books.put("Притчи", 31);
-            books.put("Еклисиаст", 12);
-            books.put("Песен на песните", 8);
-            books.put("Исаия", 66);
-            books.put("Йеремия", 52);
-            books.put("Плачът на Йеремия", 5);
-            books.put("Езекиил", 48);
-            books.put("Даниил", 12);
-            books.put("Осия", 14);
-            books.put("Йоил", 3);
-            books.put("Амос", 9);
-            books.put("Авдия", 1);
-            books.put("Йона", 4);
-            books.put("Михей", 7);
-            books.put("Наум", 3);
-            books.put("Авакум", 3);
-            books.put("Софония", 3);
-            books.put("Агей", 2);
-            books.put("Захария", 14);
-            books.put("Малахия", 4);
-            books.put("Матей", 28);
-            books.put("Марко", 16);
-            books.put("Лука", 24);
-            books.put("Йоан", 21);
-            books.put("Деяния", 28);
-            books.put("Римляни", 16);
-            books.put("1 Коринтяни", 16);
-            books.put("2 Коринтяни", 13);
-            books.put("Галатяни", 6);
-            books.put("Ефесяни", 6);
-            books.put("Филипяни", 4);
-            books.put("Колосяни", 4);
-            books.put("1 Солунци", 5);
-            books.put("2 Солунци", 3);
-            books.put("1 Тимотей", 6);
-            books.put("2 Тимотей", 4);
-            books.put("Тит", 3);
-            books.put("Филимон", 1);
-            books.put("Евреи", 13);
-            books.put("Яков", 5);
-            books.put("1 Петър", 5);
-            books.put("2 Петър", 3);
-            books.put("1 Йоан", 5);
-            books.put("2 Йоан", 1);
-            books.put("3 Йоан", 1);
-            books.put("Юда", 1);
-            books.put("Откровение", 22);
-            break;
-        case 22:
-            books.put("創世記", 50);
-            books.put("出エジプト記", 40);
-            books.put("レビ記", 27);
-            books.put("民数記", 36);
-            books.put("申命記", 34);
-            books.put("ヨシュア", 24);
-            books.put("裁き人", 21);
-            books.put("ルツ", 4);
-            books.put("サムエル第一", 31);
-            books.put("サムエル第二", 24);
-            books.put("列王第一", 22);
-            books.put("列王第二", 25);
-            books.put("歴代第一", 29);
-            books.put("歴代第二", 36);
-            books.put("エズラ", 10);
-            books.put("ネヘミヤ", 13);
-            books.put("エステル", 10);
-            books.put("ヨブ", 42);
-            books.put("詩編", 150);
-            books.put("箴言", 31);
-            books.put("伝道の書", 12);
-            books.put("ソロモンの歌", 8);
-            books.put("イザヤ", 66);
-            books.put("エレミヤ", 52);
-            books.put("哀歌", 5);
-            books.put("エゼキエル", 48);
-            books.put("ダニエル", 12);
-            books.put("ホセア", 14);
-            books.put("ヨエル", 3);
-            books.put("アモス", 9);
-            books.put("オバデヤ", 1);
-            books.put("ヨナ", 4);
-            books.put("ミカ", 7);
-            books.put("ナホム", 3);
-            books.put("ハバクク", 3);
-            books.put("ゼパニヤ", 3);
-            books.put("ハガイ", 2);
-            books.put("ゼカリヤ", 14);
-            books.put("マラキ", 4);
-            books.put("マタイ", 28);
-            books.put("マルコ", 16);
-            books.put("ルカ", 24);
-            books.put("ヨハネ", 21);
-            books.put("使徒", 28);
-            books.put("ローマ", 16);
-            books.put("コリント第一", 16);
-            books.put("コリント第二", 13);
-            books.put("ガラテア", 6);
-            books.put("エフェソス", 6);
-            books.put("フィリピ", 4);
-            books.put("コロサイ", 4);
-            books.put("テサロニケ第一", 5);
-            books.put("テサロニケ第二", 3);
-            books.put("テモテ第一", 6);
-            books.put("テモテ第二", 4);
-            books.put("テトス", 3);
-            books.put("フィレモン", 1);
-            books.put("ヘブライ", 13);
-            books.put("ヤコブ", 5);
-            books.put("ペテロ第一", 5);
-            books.put("ペテロ第二", 3);
-            books.put("ヨハネ第一", 5);
-            books.put("ヨハネ第二", 1);
-            books.put("ヨハネ第三", 1);
-            books.put("ユダ", 1);
-            books.put("啓示", 22);
-            break;
-        case 23:
-            books.put("1. Mojžíšova", 50);
-            books.put("2. Mojžíšova", 40);
-            books.put("3. Mojžíšova", 27);
-            books.put("4. Mojžíšova", 36);
-            books.put("5. Mojžíšova", 34);
-            books.put("Jozue", 24);
-            books.put("Soudci", 21);
-            books.put("Rut", 4);
-            books.put("1. Samuelova", 31);
-            books.put("2. Samuelova", 24);
-            books.put("1. Královská", 22);
-            books.put("2. Královská", 25);
-            books.put("1. Paralipomenon", 29);
-            books.put("2. Paralipomenon", 36);
-            books.put("Ezra", 10);
-            books.put("Nehemjáš", 13);
-            books.put("Ester", 10);
-            books.put("Job", 42);
-            books.put("Žalmy", 150);
-            books.put("Přísloví", 31);
-            books.put("Kazatel", 12);
-            books.put("Šalomounova píseň", 8);
-            books.put("Izajáš", 66);
-            books.put("Jeremjáš", 52);
-            books.put("Nářky", 5);
-            books.put("Ezekiel", 48);
-            books.put("Daniel", 12);
-            books.put("Ozeáš", 14);
-            books.put("Joel", 3);
-            books.put("Amos", 9);
-            books.put("Obadjáš", 1);
-            books.put("Jonáš", 4);
-            books.put("Micheáš", 7);
-            books.put("Nahum", 3);
-            books.put("Habakuk", 3);
-            books.put("Sefanjáš", 3);
-            books.put("Ageus", 2);
-            books.put("Zecharjáš", 14);
-            books.put("Malachiáš", 4);
-            books.put("Matouš", 28);
-            books.put("Marek", 16);
-            books.put("Lukáš", 24);
-            books.put("Jan", 21);
-            books.put("Skutky apoštolů", 28);
-            books.put("Římanům", 16);
-            books.put("1. Korinťanům", 16);
-            books.put("2. Korinťanům", 13);
-            books.put("Galaťanům", 6);
-            books.put("Efezanům", 6);
-            books.put("Filipanům", 4);
-            books.put("Kolosanům", 4);
-            books.put("1. Tesaloničanům", 5);
-            books.put("2. Tesaloničanům", 3);
-            books.put("1. Timoteovi", 6);
-            books.put("2. Timoteovi", 4);
-            books.put("Titovi", 3);
-            books.put("Filemonovi", 1);
-            books.put("Hebrejcům", 13);
-            books.put("Jakub", 5);
-            books.put("1. Petra", 5);
-            books.put("2. Petra", 3);
-            books.put("1. Jana", 5);
-            books.put("2. Jana", 1);
-            books.put("3. Jana", 1);
-            books.put("Juda", 1);
-            books.put("Zjevení", 22);
-            break;
-        case 24:
-            books.put("تكوين", 50);
-            books.put("خروج", 40);
-            books.put("لاويين", 27);
-            books.put("عدد", 36);
-            books.put("تثنية", 34);
-            books.put("يشوع", 24);
-            books.put("قضاة", 21);
-            books.put("راعوث", 4);
-            books.put("صموئيل الاول", 31);
-            books.put("صموئيل الثاني", 24);
-            books.put("ملوك الاول", 22);
-            books.put("ملوك الثاني", 25);
-            books.put("أخبار الايام الاول", 29);
-            books.put("أخبار الايام الثاني", 36);
-            books.put("عزرا", 10);
-            books.put("نحميا", 13);
-            books.put("استير", 10);
-            books.put("ايوب", 42);
-            books.put("مزمور", 150);
-            books.put("أمثال", 31);
-            books.put("جامعة", 12);
-            books.put("نشيد الاناشيد", 8);
-            books.put("إشعيا", 66);
-            books.put("إرميا", 52);
-            books.put("المراثي", 5);
-            books.put("حزقيال", 48);
-            books.put("دانيال", 12);
-            books.put("هوشع", 14);
-            books.put("يوئيل", 3);
-            books.put("عاموس", 9);
-            books.put("عوبديا", 1);
-            books.put("يونان", 4);
-            books.put("ميخا", 7);
-            books.put("ناحوم", 3);
-            books.put("حبقوق", 3);
-            books.put("صفنيا", 3);
-            books.put("حجاي", 2);
-            books.put("زكريا", 14);
-            books.put("ملاخي", 4);
-            books.put("متى", 28);
-            books.put("مرقس", 16);
-            books.put("لوقا", 24);
-            books.put("يوحنا", 21);
-            books.put("أعمال", 28);
-            books.put("روما", 16);
-            books.put("كورنثوس الاولى", 16);
-            books.put("كورنثوس الثانية", 13);
-            books.put("غلاطية", 6);
-            books.put("افسس", 6);
-            books.put("فيلبي", 4);
-            books.put("كولوسي", 4);
-            books.put("تسالونيكي الاولى", 5);
-            books.put("تسالونيكي الثانية", 3);
-            books.put("تيموثاوس الاولى", 6);
-            books.put("تيموثاوس الثانية", 4);
-            books.put("تيطس", 3);
-            books.put("فليمون", 1);
-            books.put("عبرانيين", 13);
-            books.put("يعقوب", 5);
-            books.put("بطرس الاولى", 5);
-            books.put("بطرس الثانية", 3);
-            books.put("يوحنا الاولى", 5);
-            books.put("يوحنا الثانية", 1);
-            books.put("يوحنا الثالثة", 1);
-            books.put("يهوذا", 1);
-            books.put("رؤيا", 22);
-            break;
-        case 25:
-            books.put("Ծննդոց", 50);
-            books.put("Ելք", 40);
-            books.put("Ղևտական", 27);
-            books.put("Թվեր", 36);
-            books.put("2 Օրենք", 34);
-            books.put("Հեսու", 24);
-            books.put("Դատավորներ", 21);
-            books.put("Հռութ", 4);
-            books.put("1 Սամուել", 31);
-            books.put("2 Սամուել", 24);
-            books.put("1 Թագավորներ", 22);
-            books.put("2 Թագավորներ", 25);
-            books.put("1 Տարեգրություն", 29);
-            books.put("2 Տարեգրություն", 36);
-            books.put("Եզրաս", 10);
-            books.put("Նեեմիա", 13);
-            books.put("Եսթեր", 10);
-            books.put("Հոբ", 42);
-            books.put("Սաղմոսներ", 150);
-            books.put("Առակներ", 31);
-            books.put("Ժողովող", 12);
-            books.put("Երգերի Երգը", 8);
-            books.put("Եսայիա", 66);
-            books.put("Երեմիա", 52);
-            books.put("Ողբ", 5);
-            books.put("Եզեկիել", 48);
-            books.put("Դանիել", 12);
-            books.put("Օսեե", 14);
-            books.put("Հովել", 3);
-            books.put("Ամոս", 9);
-            books.put("Աբդիա", 1);
-            books.put("Հովնան", 4);
-            books.put("Միքիա", 7);
-            books.put("Նաում", 3);
-            books.put("Ամբակում", 3);
-            books.put("Սոփոնիա", 3);
-            books.put("Անգե", 2);
-            books.put("Զաքարիա", 14);
-            books.put("Մաղաքիա", 4);
-            books.put("Մատթեոս", 28);
-            books.put("Մարկոս", 16);
-            books.put("Ղուկաս", 24);
-            books.put("Հովհաննես", 21);
-            books.put("Գործեր", 28);
-            books.put("Հռոմեացիներ", 16);
-            books.put("1 Կորնթացիներ", 16);
-            books.put("2 Կորնթացիներ", 13);
-            books.put("Գաղատացիներ", 6);
-            books.put("Եփեսացիներ", 6);
-            books.put("Փիլիպպեցիներ", 4);
-            books.put("Կողոսացիներ", 4);
-            books.put("1 Թեսաղոնիկեցիներ", 5);
-            books.put("2 Թեսաղոնիկեցիներ", 3);
-            books.put("1 Տիմոթեոս", 6);
-            books.put("2 Տիմոթեոս", 4);
-            books.put("Տիտոս", 3);
-            books.put("Փիլիմոն", 1);
-            books.put("Եբրայեցիներ", 13);
-            books.put("Հակոբոս", 5);
-            books.put("1 Պետրոս", 5);
-            books.put("2 Պետրոս", 3);
-            books.put("1 Հովհաննես", 5);
-            books.put("2 Հովհաննես", 1);
-            books.put("3 Հովհաննես", 1);
-            books.put("Հուդա", 1);
-            books.put("Հայտնություն", 22);
-            break;
-        case 26:
-            books.put("Gênesis", 50);
-            books.put("Êxodo", 40);
-            books.put("Levítico", 27);
-            books.put("Números", 36);
-            books.put("Deuteronômio", 34);
-            books.put("Josué", 24);
-            books.put("Juízes", 21);
-            books.put("Rute", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Reis", 22);
-            books.put("2 Reis", 25);
-            books.put("1 Crônicas", 29);
-            books.put("2 Crônicas", 36);
-            books.put("Esdras", 10);
-            books.put("Neemias", 13);
-            books.put("Ester", 10);
-            books.put("Jó", 42);
-            books.put("Salmos", 150);
-            books.put("Provérbios", 31);
-            books.put("Eclesiastes", 12);
-            books.put("Cântico de Salomão", 8);
-            books.put("Isaías", 66);
-            books.put("Jeremias", 52);
-            books.put("Lamentações", 5);
-            books.put("Ezequiel", 48);
-            books.put("Daniel", 12);
-            books.put("Oseias", 14);
-            books.put("Joel", 3);
-            books.put("Amós", 9);
-            books.put("Obadias", 1);
-            books.put("Jonas", 4);
-            books.put("Miqueias", 7);
-            books.put("Naum", 3);
-            books.put("Habacuque", 3);
-            books.put("Sofonias", 3);
-            books.put("Ageu", 2);
-            books.put("Zacarias", 14);
-            books.put("Malaquias", 4);
-            books.put("Mateus", 28);
-            books.put("Marcos", 16);
-            books.put("Lucas", 24);
-            books.put("João", 21);
-            books.put("Atos", 28);
-            books.put("Romanos", 16);
-            books.put("1 Coríntios", 16);
-            books.put("2 Coríntios", 13);
-            books.put("Gálatas", 6);
-            books.put("Efésios", 6);
-            books.put("Filipenses", 4);
-            books.put("Colossenses", 4);
-            books.put("1 Tessalonicenses", 5);
-            books.put("2 Tessalonicenses", 3);
-            books.put("1 Timóteo", 6);
-            books.put("2 Timóteo", 4);
-            books.put("Tito", 3);
-            books.put("Filêmon", 1);
-            books.put("Hebreus", 13);
-            books.put("Tiago", 5);
-            books.put("1 Pedro", 5);
-            books.put("2 Pedro", 3);
-            books.put("1 João", 5);
-            books.put("2 João", 1);
-            books.put("3 João", 1);
-            books.put("Judas", 1);
-            books.put("Apocalipse", 22);
-            break;
-        case 27:
-            books.put("Zanafilla", 50);
-            books.put("Dalja", 40);
-            books.put("Levitiku", 27);
-            books.put("Numrat", 36);
-            books.put("Ligji i përtërirë", 34);
-            books.put("Josiu", 24);
-            books.put("Gjykatësit", 21);
-            books.put("Rutha", 4);
-            books.put("1 Samuelit", 31);
-            books.put("2 Samuelit", 24);
-            books.put("1 Mbretërve", 22);
-            books.put("2 Mbretërve", 25);
-            books.put("1 Kronikave", 29);
-            books.put("2 Kronikave", 36);
-            books.put("Ezdra", 10);
-            books.put("Nehemia", 13);
-            books.put("Estera", 10);
-            books.put("Jobi", 42);
-            books.put("Psalmet", 150);
-            books.put("Proverbat", 31);
-            books.put("Eklisiastiu", 12);
-            books.put("Kënga e Solomonit", 8);
-            books.put("Isaia", 66);
-            books.put("Jeremia", 52);
-            books.put("Vajtimet", 5);
-            books.put("Ezekieli", 48);
-            books.put("Danieli", 12);
-            books.put("Hozea", 14);
-            books.put("Joeli", 3);
-            books.put("Amosi", 9);
-            books.put("Abdia", 1);
-            books.put("Jonai", 4);
-            books.put("Mikea", 7);
-            books.put("Naumi", 3);
-            books.put("Habakuku", 3);
-            books.put("Sofonia", 3);
-            books.put("Hageu", 2);
-            books.put("Zakaria", 14);
-            books.put("Malakia", 4);
-            books.put("Mateu", 28);
-            books.put("Marku", 16);
-            books.put("Luka", 24);
-            books.put("Gjoni", 21);
-            books.put("Veprat", 28);
-            books.put("Romakëve", 16);
-            books.put("1 Korintasve", 16);
-            books.put("2 Korintasve", 13);
-            books.put("Galatasve", 6);
-            books.put("Efesianëve", 6);
-            books.put("Filipianëve", 4);
-            books.put("Kolosianëve", 4);
-            books.put("1 Selanikasve", 5);
-            books.put("2 Selanikasve", 3);
-            books.put("1 Timoteut", 6);
-            books.put("2 Timoteut", 4);
-            books.put("Titit", 3);
-            books.put("Filemonit", 1);
-            books.put("Hebrenjve", 13);
-            books.put("Jakovi", 5);
-            books.put("1 Pjetrit", 5);
-            books.put("2 Pjetrit", 3);
-            books.put("1 Gjonit", 5);
-            books.put("2 Gjonit", 1);
-            books.put("3 Gjonit", 1);
-            books.put("Juda", 1);
-            books.put("Zbulesa", 22);
-            break;
-        case 28:
-            books.put("Genesis", 50);
-            books.put("Exodus", 40);
-            books.put("Leviticus", 27);
-            books.put("Numeri", 36);
-            books.put("Deuteronomium", 34);
-            books.put("Jozua", 24);
-            books.put("Rechters", 21);
-            books.put("Ruth", 4);
-            books.put("1 Samuël", 31);
-            books.put("2 Samuël", 24);
-            books.put("1 Koningen", 22);
-            books.put("2 Koningen", 25);
-            books.put("1 Kronieken", 29);
-            books.put("2 Kronieken", 36);
-            books.put("Ezra", 10);
-            books.put("Nehemia", 13);
-            books.put("Esther", 10);
-            books.put("Job", 42);
-            books.put("Psalmen", 150);
-            books.put("Spreuken", 31);
-            books.put("Prediker", 12);
-            books.put("Hooglied", 8);
-            books.put("Jesaja", 66);
-            books.put("Jeremia", 52);
-            books.put("Klaagliederen", 5);
-            books.put("Ezechiël", 48);
-            books.put("Daniël", 12);
-            books.put("Hosea", 14);
-            books.put("Joël", 3);
-            books.put("Amos", 9);
-            books.put("Obadja", 1);
-            books.put("Jona", 4);
-            books.put("Micha", 7);
-            books.put("Nahum", 3);
-            books.put("Habakuk", 3);
-            books.put("Zefanja", 3);
-            books.put("Haggaï", 2);
-            books.put("Zacharia", 14);
-            books.put("Maleachi", 4);
-            books.put("Mattheüs", 28);
-            books.put("Markus", 16);
-            books.put("Lukas", 24);
-            books.put("Johannes", 21);
-            books.put("Handelingen", 28);
-            books.put("Romeinen", 16);
-            books.put("1 Korinthiërs", 16);
-            books.put("2 Korinthiërs", 13);
-            books.put("Galaten", 6);
-            books.put("Efeziërs", 6);
-            books.put("Filippenzen", 4);
-            books.put("Kolossenzen", 4);
-            books.put("1 Thessalonicenzen", 5);
-            books.put("2 Thessalonicenzen", 3);
-            books.put("1 Timotheüs", 6);
-            books.put("2 Timotheüs", 4);
-            books.put("Titus", 3);
-            books.put("Filemon", 1);
-            books.put("Hebreeën", 13);
-            books.put("Jakobus", 5);
-            books.put("1 Petrus", 5);
-            books.put("2 Petrus", 3);
-            books.put("1 Johannes", 5);
-            books.put("2 Johannes", 1);
-            books.put("3 Johannes", 1);
-            books.put("Judas", 1);
-            books.put("Openbaring", 22);
-            break;
-        case 29:
-            books.put("Kejadian", 50);
-            books.put("Keluaran", 40);
-            books.put("Imamat", 27);
-            books.put("Bilangan", 36);
-            books.put("Ulangan", 34);
-            books.put("Yosua", 24);
-            books.put("Hakim-Hakim", 21);
-            books.put("Rut", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Raja-Raja", 22);
-            books.put("2 Raja-Raja", 25);
-            books.put("1 Tawarikh", 29);
-            books.put("2 Tawarikh", 36);
-            books.put("Ezra", 10);
-            books.put("Nehemia", 13);
-            books.put("Ester", 10);
-            books.put("Ayub", 42);
-            books.put("Mazmur", 150);
-            books.put("Amsal", 31);
-            books.put("Pengkhotbah", 12);
-            books.put("Kidung Agung", 8);
-            books.put("Yesaya", 66);
-            books.put("Yeremia", 52);
-            books.put("Ratapan", 5);
-            books.put("Yehezkiel", 48);
-            books.put("Daniel", 12);
-            books.put("Hosea", 14);
-            books.put("Yoel", 3);
-            books.put("Amos", 9);
-            books.put("Obaja", 1);
-            books.put("Yunus", 4);
-            books.put("Mikha", 7);
-            books.put("Nahum", 3);
-            books.put("Habakuk", 3);
-            books.put("Zefanya", 3);
-            books.put("Hagai", 2);
-            books.put("Zakharia", 14);
-            books.put("Maleakhi", 4);
-            books.put("Matius", 28);
-            books.put("Markus", 16);
-            books.put("Lukas", 24);
-            books.put("Yohanes", 21);
-            books.put("Kisah", 28);
-            books.put("Roma", 16);
-            books.put("1 Korintus", 16);
-            books.put("2 Korintus", 13);
-            books.put("Galatia", 6);
-            books.put("Efesus", 6);
-            books.put("Filipi", 4);
-            books.put("Kolose", 4);
-            books.put("1 Tesalonika", 5);
-            books.put("2 Tesalonika", 3);
-            books.put("1 Timotius", 6);
-            books.put("2 Timotius", 4);
-            books.put("Titus", 3);
-            books.put("Filemon", 1);
-            books.put("Ibrani", 13);
-            books.put("Yakobus", 5);
-            books.put("1 Petrus", 5);
-            books.put("2 Petrus", 3);
-            books.put("1 Yohanes", 5);
-            books.put("2 Yohanes", 1);
-            books.put("3 Yohanes", 1);
-            books.put("Yudas", 1);
-            books.put("Penyingkapan", 22);
-            break;
-        case 30:
-            books.put("1. Mosebok", 50);
-            books.put("2. Mosebok", 40);
-            books.put("3. Mosebok", 27);
-            books.put("4. Mosebok", 36);
-            books.put("5. Mosebok", 34);
-            books.put("Josva", 24);
-            books.put("Dommerne", 21);
-            books.put("Rut", 4);
-            books.put("1. Samuelsbok", 31);
-            books.put("2. Samuelsbok", 24);
-            books.put("1. Kongebok", 22);
-            books.put("2. Kongebok", 25);
-            books.put("1. Krønikebok", 29);
-            books.put("2. Krønikebok", 36);
-            books.put("Esra", 10);
-            books.put("Nehemja", 13);
-            books.put("Ester", 10);
-            books.put("Job", 42);
-            books.put("Salme", 150);
-            books.put("Ordspråkene", 31);
-            books.put("Forkynneren", 12);
-            books.put("Høysangen", 8);
-            books.put("Jesaja", 66);
-            books.put("Jeremia", 52);
-            books.put("Klagesangene", 5);
-            books.put("Esekiel", 48);
-            books.put("Daniel", 12);
-            books.put("Hosea", 14);
-            books.put("Joel", 3);
-            books.put("Amos", 9);
-            books.put("Obadja", 1);
-            books.put("Jona", 4);
-            books.put("Mika", 7);
-            books.put("Nahum", 3);
-            books.put("Habakkuk", 3);
-            books.put("Sefanja", 3);
-            books.put("Haggai", 2);
-            books.put("Sakarja", 14);
-            books.put("Malaki", 4);
-            books.put("Matteus", 28);
-            books.put("Markus", 16);
-            books.put("Lukas", 24);
-            books.put("Johannes", 21);
-            books.put("Apostlenes gjerninger", 28);
-            books.put("Romerne", 16);
-            books.put("1. Korinter", 16);
-            books.put("2. Korinter", 13);
-            books.put("Galaterne", 6);
-            books.put("Efeserne", 6);
-            books.put("Filipperne", 4);
-            books.put("Kolosserne", 4);
-            books.put("1. Tessaloniker", 5);
-            books.put("2. Tessaloniker", 3);
-            books.put("1. Timoteus", 6);
-            books.put("2. Timoteus", 4);
-            books.put("Titus", 3);
-            books.put("Filemon", 1);
-            books.put("Hebreerne", 13);
-            books.put("Jakob", 5);
-            books.put("1. Peter", 5);
-            books.put("2. Peter", 3);
-            books.put("1. Johannes", 5);
-            books.put("2. Johannes", 1);
-            books.put("3. Johannes", 1);
-            books.put("Judas", 1);
-            books.put("Åpenbaringen", 22);
-            break;
-        case 31:
-            books.put("1 Moseboken", 50);
-            books.put("2 Moseboken", 40);
-            books.put("3 Moseboken", 27);
-            books.put("4 Moseboken", 36);
-            books.put("5 Moseboken", 34);
-            books.put("Josua", 24);
-            books.put("Domarboken", 21);
-            books.put("Rut", 4);
-            books.put("1 Samuelsboken", 31);
-            books.put("2 Samuelsboken", 24);
-            books.put("1 Kungaboken", 22);
-            books.put("2 Kungaboken", 25);
-            books.put("1 Krönikeboken", 29);
-            books.put("2 Krönikeboken", 36);
-            books.put("Esra", 10);
-            books.put("Nehemja", 13);
-            books.put("Ester", 10);
-            books.put("Job", 42);
-            books.put("Psalmerna", 150);
-            books.put("Ordspråksboken", 31);
-            books.put("Predikaren", 12);
-            books.put("Höga Visan", 8);
-            books.put("Jesaja", 66);
-            books.put("Jeremia", 52);
-            books.put("Klagovisorna", 5);
-            books.put("Hesekiel", 48);
-            books.put("Daniel", 12);
-            books.put("Hosea", 14);
-            books.put("Joel", 3);
-            books.put("Amos", 9);
-            books.put("Obadja", 1);
-            books.put("Jona", 4);
-            books.put("Mika", 7);
-            books.put("Nahum", 3);
-            books.put("Habackuk", 3);
-            books.put("Sefanja", 3);
-            books.put("Haggaj", 2);
-            books.put("Sakarja", 14);
-            books.put("Malaki", 4);
-            books.put("Matteus", 28);
-            books.put("Markus", 16);
-            books.put("Lukas", 24);
-            books.put("Johannes", 21);
-            books.put("Apostlagärningarna", 28);
-            books.put("Romarna", 16);
-            books.put("1 Korinthierna", 16);
-            books.put("2 Korinthierna", 13);
-            books.put("Galaterna", 6);
-            books.put("Efesierna", 6);
-            books.put("Filipperna", 4);
-            books.put("Kolosserna", 4);
-            books.put("1 Thessalonikerna", 5);
-            books.put("2 Thessalonikerna", 3);
-            books.put("1 Timoteus", 6);
-            books.put("2 Timoteus", 4);
-            books.put("Titus", 3);
-            books.put("Filemon", 1);
-            books.put("Hebréerna", 13);
-            books.put("Jakob", 5);
-            books.put("1 Petrus", 5);
-            books.put("2 Petrus", 3);
-            books.put("1 Johannes", 5);
-            books.put("2 Johannes", 1);
-            books.put("3 Johannes", 1);
-            books.put("Judas", 1);
-            books.put("Uppenbarelseboken", 22);
-            break;
-        case 32:
-            books.put("Ma-thi-ơ", 28);
-            books.put("Mác", 16);
-            books.put("Lu-ca", 24);
-            books.put("Giăng", 21);
-            books.put("Công vụ", 28);
-            books.put("Rô-ma", 16);
-            books.put("1 Cô-rinh-tô", 16);
-            books.put("2 Cô-rinh-tô", 13);
-            books.put("Ga-la-ti", 6);
-            books.put("Ê-phê-sô", 6);
-            books.put("Phi-líp", 4);
-            books.put("Cô-lô-se", 4);
-            books.put("1 Tê-sa-lô-ni-ca", 5);
-            books.put("2 Tê-sa-lô-ni-ca", 3);
-            books.put("1 Ti-mô-thê", 6);
-            books.put("2 Ti-mô-thê", 4);
-            books.put("Tít", 3);
-            books.put("Phi-lê-môn", 1);
-            books.put("Hê-bơ-rơ", 13);
-            books.put("Gia-cơ", 5);
-            books.put("1 Phi-e-rơ", 5);
-            books.put("2 Phi-e-rơ", 3);
-            books.put("1 Giăng", 5);
-            books.put("2 Giăng", 1);
-            books.put("3 Giăng", 1);
-            books.put("Giu-đe", 1);
-            books.put("Khải huyền", 22);
-            break;
-        case 33:
-            books.put("Başlangıç", 50);
-            books.put("Çıkış", 40);
-            books.put("Levioğulları", 27);
-            books.put("Sayılar", 36);
-            books.put("Tekrar", 34);
-            books.put("Yeşu", 24);
-            books.put("Hâkimler", 21);
-            books.put("Rut", 4);
-            books.put("1. Samuel", 31);
-            books.put("2. Samuel", 24);
-            books.put("1. Krallar", 22);
-            books.put("2. Krallar", 25);
-            books.put("1. Tarihler", 29);
-            books.put("2. Tarihler", 36);
-            books.put("Ezra", 10);
-            books.put("Nehemya", 13);
-            books.put("Ester", 10);
-            books.put("Eyüp", 42);
-            books.put("Mezmurlar", 150);
-            books.put("Özdeyişler", 31);
-            books.put("Vaiz", 12);
-            books.put("Ezgiler Ezgisi", 8);
-            books.put("İşaya", 66);
-            books.put("Yeremya", 52);
-            books.put("Ağıtlar", 5);
-            books.put("Hezekiel", 48);
-            books.put("Daniel", 12);
-            books.put("Hoşea", 14);
-            books.put("Yoel", 3);
-            books.put("Amos", 9);
-            books.put("Obadya", 1);
-            books.put("Yunus", 4);
-            books.put("Mika", 7);
-            books.put("Nahum", 3);
-            books.put("Habakkuk", 3);
-            books.put("Tsefanya", 3);
-            books.put("Haggay", 2);
-            books.put("Zekeriya", 14);
-            books.put("Malaki", 4);
-            books.put("Matta", 28);
-            books.put("Markos", 16);
-            books.put("Luka", 24);
-            books.put("Yuhanna", 21);
-            books.put("Elçilerin İşleri", 28);
-            books.put("Romalılar", 16);
-            books.put("1. Korintoslular", 16);
-            books.put("2. Korintoslular", 13);
-            books.put("Galatyalılar", 6);
-            books.put("Efesoslular", 6);
-            books.put("Filipililer", 4);
-            books.put("Koloseliler", 4);
-            books.put("1. Selanikliler", 5);
-            books.put("2. Selanikliler", 3);
-            books.put("1. Timoteos", 6);
-            books.put("2. Timoteos", 4);
-            books.put("Titus", 3);
-            books.put("Filimon", 1);
-            books.put("İbraniler", 13);
-            books.put("Yakup", 5);
-            books.put("1. Petrus", 5);
-            books.put("2. Petrus", 3);
-            books.put("1. Yuhanna", 5);
-            books.put("2. Yuhanna", 1);
-            books.put("3. Yuhanna", 1);
-            books.put("Yahuda", 1);
-            books.put("Vahiy", 22);
-            break;
-        case 34:
-            books.put("ម៉ាថាយ", 28);
-            books.put("ម៉ាកុស", 16);
-            books.put("លូកា", 24);
-            books.put("យ៉ូហាន", 21);
-            books.put("សកម្មភាព", 28);
-            books.put("រ៉ូម", 16);
-            books.put("កូរិនថូសទី១", 16);
-            books.put("កូរិនថូសទី២", 13);
-            books.put("កាឡាទី", 6);
-            books.put("អេភេសូរ", 6);
-            books.put("ភីលីព", 4);
-            books.put("កូឡុស", 4);
-            books.put("ថែស្សាឡូនិចទី១", 5);
-            books.put("ថែស្សាឡូនិចទី២", 3);
-            books.put("ធីម៉ូថេទី១", 6);
-            books.put("ធីម៉ូថេទី២", 4);
-            books.put("ទីតុស", 3);
-            books.put("ភីលេម៉ូន", 1);
-            books.put("ហេប្រឺ", 13);
-            books.put("យ៉ាកុប", 5);
-            books.put("ពេត្រុសទី១", 5);
-            books.put("ពេត្រុសទី២", 3);
-            books.put("យ៉ូហានទី១", 5);
-            books.put("យ៉ូហានទី២", 1);
-            books.put("យ៉ូហានទី៣", 1);
-            books.put("យូដាស", 1);
-            books.put("ការបើកបង្ហាញ", 22);
-            break;
-        case 35:
-            books.put("Мұсаның 1-жазбасы", 50);
-            books.put("Мұсаның 2-жазбасы", 40);
-            books.put("Мұсаның 3-жазбасы", 27);
-            books.put("Мұсаның 4-жазбасы", 36);
-            books.put("Мұсаның 5-жазбасы", 34);
-            books.put("Ешуа", 24);
-            books.put("Билер", 21);
-            books.put("Рут", 4);
-            books.put("Самуилдің 1-жазбасы", 31);
-            books.put("Самуилдің 2-жазбасы", 24);
-            books.put("Патшалар 1-жазба", 22);
-            books.put("Патшалар 2-жазба", 25);
-            books.put("Шежірелер 1-жазба", 29);
-            books.put("Шежірелер 2-жазба", 36);
-            books.put("Езра", 10);
-            books.put("Нехемия", 13);
-            books.put("Естер", 10);
-            books.put("Әйүп", 42);
-            books.put("Зәбүр", 150);
-            books.put("Нақыл сөздер", 31);
-            books.put("Уағыздаушы", 12);
-            books.put("Таңдаулы ән", 8);
-            books.put("Ишая", 66);
-            books.put("Еремия", 52);
-            books.put("Еремияның зары", 5);
-            books.put("Езекиел", 48);
-            books.put("Даниял", 12);
-            books.put("Ошия", 14);
-            books.put("Жоел", 3);
-            books.put("Амос", 9);
-            books.put("Абадия", 1);
-            books.put("Жүніс", 4);
-            books.put("Миха", 7);
-            books.put("Нағұм", 3);
-            books.put("Абақұқ", 3);
-            books.put("Софония", 3);
-            books.put("Хагей", 2);
-            books.put("Зәкәрия", 14);
-            books.put("Малахи", 4);
-            books.put("Матай", 28);
-            books.put("Марқа", 16);
-            books.put("Лұқа", 24);
-            books.put("Жохан", 21);
-            books.put("Елшілердің істері", 28);
-            books.put("Римдіктерге", 16);
-            books.put("Қорынттықтарға 1-хат", 16);
-            books.put("Қорынттықтарға 2-хат", 13);
-            books.put("Ғалаттықтарға", 6);
-            books.put("Ефестіктерге", 6);
-            books.put("Філіпіліктерге", 4);
-            books.put("Қолостықтарға", 4);
-            books.put("Салоникалықтарға 1-хат", 5);
-            books.put("Салоникалықтарға 2-хат", 3);
-            books.put("Тімөтеге 1-хат", 6);
-            books.put("Тімөтеге 2-хат", 4);
-            books.put("Титке", 3);
-            books.put("Філімонға", 1);
-            books.put("Еврейлерге", 13);
-            books.put("Жақып", 5);
-            books.put("Петірдің 1-хаты", 5);
-            books.put("Петірдің 2-хаты", 3);
-            books.put("Жоханның 1-хаты", 5);
-            books.put("Жоханның 2-хаты", 1);
-            books.put("Жоханның 3-хаты", 1);
-            books.put("Яһуда", 1);
-            books.put("Аян", 22);
-            break;
-        case 36:
-            books.put("Genesis", 50);
-            books.put("Eksodus", 40);
-            books.put("Levitikus", 27);
-            books.put("Numeri", 36);
-            books.put("Deuteronomium", 34);
-            books.put("Josua", 24);
-            books.put("Rigters", 21);
-            books.put("Rut", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Konings", 22);
-            books.put("2 Konings", 25);
-            books.put("1 Kronieke", 29);
-            books.put("2 Kronieke", 36);
-            books.put("Esra", 10);
-            books.put("Nehemia", 13);
-            books.put("Ester", 10);
-            books.put("Job", 42);
-            books.put("Psalms", 150);
-            books.put("Spreuke", 31);
-            books.put("Prediker", 12);
-            books.put("Hooglied", 8);
-            books.put("Jesaja", 66);
-            books.put("Jeremia", 52);
-            books.put("Klaagliedere", 5);
-            books.put("Esegiël", 48);
-            books.put("Daniël", 12);
-            books.put("Hosea", 14);
-            books.put("Joël", 3);
-            books.put("Amos", 9);
-            books.put("Obadja", 1);
-            books.put("Jona", 4);
-            books.put("Miga", 7);
-            books.put("Nahum", 3);
-            books.put("Habakuk", 3);
-            books.put("Sefanja", 3);
-            books.put("Haggai", 2);
-            books.put("Sagaria", 14);
-            books.put("Maleagi", 4);
-            books.put("Matteus", 28);
-            books.put("Markus", 16);
-            books.put("Lukas", 24);
-            books.put("Johannes", 21);
-            books.put("Handelinge", 28);
-            books.put("Romeine", 16);
-            books.put("1 Korintiërs", 16);
-            books.put("2 Korintiers", 13);
-            books.put("Galasiërs", 6);
-            books.put("Efesiërs", 6);
-            books.put("Filippense", 4);
-            books.put("Kolossense", 4);
-            books.put("1 Tessalonisense", 5);
-            books.put("2 Tessalonisense", 3);
-            books.put("1 Timoteus", 6);
-            books.put("2 Timoteus", 4);
-            books.put("Titus", 3);
-            books.put("Filemon", 1);
-            books.put("Hebreërs", 13);
-            books.put("Jakobus", 5);
-            books.put("1 Petrus", 5);
-            books.put("2 Petrus", 3);
-            books.put("1 Johannes", 5);
-            books.put("2 Johannes", 1);
-            books.put("3 Johannes", 1);
-            books.put("Judas", 1);
-            books.put("Openbaring", 22);
-            break;
-        case 37:
-            books.put("1. Moosese", 50);
-            books.put("2. Moosese", 40);
-            books.put("3. Moosese", 27);
-            books.put("4. Moosese", 36);
-            books.put("5. Moosese", 34);
-            books.put("Joosua", 24);
-            books.put("Kohtumõistjate", 21);
-            books.put("Rutt", 4);
-            books.put("1. Saamueli", 31);
-            books.put("2. Saamueli", 24);
-            books.put("1. Kuningate", 22);
-            books.put("2. Kuningate", 25);
-            books.put("1. Ajaraamat", 29);
-            books.put("2. Ajaraamat", 36);
-            books.put("Esra", 10);
-            books.put("Nehemja", 13);
-            books.put("Ester", 10);
-            books.put("Iiob", 42);
-            books.put("Laulud", 150);
-            books.put("Õpetussõnad", 31);
-            books.put("Koguja", 12);
-            books.put("Ülemlaul", 8);
-            books.put("Jesaja", 66);
-            books.put("Jeremija", 52);
-            books.put("Nutulaulud", 5);
-            books.put("Hesekiel", 48);
-            books.put("Taaniel", 12);
-            books.put("Hoosea", 14);
-            books.put("Joel", 3);
-            books.put("Aamos", 9);
-            books.put("Obadja", 1);
-            books.put("Joona", 4);
-            books.put("Miika", 7);
-            books.put("Nahum", 3);
-            books.put("Habakuk", 3);
-            books.put("Sefanja", 3);
-            books.put("Haggai", 2);
-            books.put("Sakarja", 14);
-            books.put("Malaki", 4);
-            books.put("Matteuse", 28);
-            books.put("Markuse", 16);
-            books.put("Luuka", 24);
-            books.put("Johannese", 21);
-            books.put("Apostlite teod", 28);
-            books.put("Roomlastele", 16);
-            books.put("1. Korintlastele", 16);
-            books.put("2. Korintlastele", 13);
-            books.put("Galaatlastele", 6);
-            books.put("Efeslastele", 6);
-            books.put("Filiplastele", 4);
-            books.put("Koloslastele", 4);
-            books.put("1. Tessalooniklastele", 5);
-            books.put("2. Tessalooniklastele", 3);
-            books.put("1. Timoteosele", 6);
-            books.put("2. Timoteosele", 4);
-            books.put("Tiitusele", 3);
-            books.put("Fileemonile", 1);
-            books.put("Heebrealastele", 13);
-            books.put("Jaakobuse", 5);
-            books.put("1. Peetruse", 5);
-            books.put("2. Peetruse", 3);
-            books.put("1. Johannese", 5);
-            books.put("2. Johannese", 1);
-            books.put("3. Johannese", 1);
-            books.put("Juuda", 1);
-            books.put("Ilmutus", 22);
-            break;
-        case 38:
-            books.put("Ebandeli", 50);
-            books.put("Kobima", 40);
-            books.put("Balevi", 27);
-            books.put("Mitángo", 36);
-            books.put("Kolimbola Mibeko", 34);
-            books.put("Yosua", 24);
-            books.put("Basambisi", 21);
-            books.put("Ruta", 4);
-            books.put("1 Samwele", 31);
-            books.put("2 Samwele", 24);
-            books.put("1 Bakonzi", 22);
-            books.put("2 Bakonzi", 25);
-            books.put("1 Ntango", 29);
-            books.put("2 Ntango", 36);
-            books.put("Ezera", 10);
-            books.put("Nehemia", 13);
-            books.put("Estere", 10);
-            books.put("Yobo", 42);
-            books.put("Nzembo", 150);
-            books.put("Masese", 31);
-            books.put("Mosakoli", 12);
-            books.put("Loyembo ya Salomo", 8);
-            books.put("Yisaya", 66);
-            books.put("Yirimia", 52);
-            books.put("Bileli", 5);
-            books.put("Ezekiele", 48);
-            books.put("Danyele", 12);
-            books.put("Hosea", 14);
-            books.put("Yoele", 3);
-            books.put("Amose", 9);
-            books.put("Obadia", 1);
-            books.put("Yona", 4);
-            books.put("Mika", 7);
-            books.put("Nahumu", 3);
-            books.put("Habakuku", 3);
-            books.put("Sefania", 3);
-            books.put("Hagai", 2);
-            books.put("Zekaria", 14);
-            books.put("Malaki", 4);
-            books.put("Matai", 28);
-            books.put("Marko", 16);
-            books.put("Luka", 24);
-            books.put("Yoane", 21);
-            books.put("Misala", 28);
-            books.put("Baroma", 16);
-            books.put("1 Bakorinti", 16);
-            books.put("2 Bakorinti", 13);
-            books.put("Bagalatia", 6);
-            books.put("Baefese", 6);
-            books.put("Bafilipi", 4);
-            books.put("Bakolose", 4);
-            books.put("1 Batesaloniki", 5);
-            books.put("2 Batesaloniki", 3);
-            books.put("1 Timote", 6);
-            books.put("2 Timote", 4);
-            books.put("Tito", 3);
-            books.put("Filemo", 1);
-            books.put("Baebre", 13);
-            books.put("Yakobo", 5);
-            books.put("1 Petro", 5);
-            books.put("2 Petro", 3);
-            books.put("1 Yoane", 5);
-            books.put("2 Yoane", 1);
-            books.put("3 Yoane", 1);
-            books.put("Yuda", 1);
-            books.put("Emoniseli", 22);
-            break;
-        case 39:
-            books.put("Genesisy", 50);
-            books.put("Eksodosy", 40);
-            books.put("Levitikosy", 27);
-            books.put("Nomery", 36);
-            books.put("Deoteronomia", 34);
-            books.put("Josoa", 24);
-            books.put("Mpitsara", 21);
-            books.put("Rota", 4);
-            books.put("1 Samoela", 31);
-            books.put("2 Samoela", 24);
-            books.put("1 Mpanjaka", 22);
-            books.put("2 Mpanjaka", 25);
-            books.put("1 Tantara", 29);
-            books.put("2 Tantara", 36);
-            books.put("Ezra", 10);
-            books.put("Nehemia", 13);
-            books.put("Estera", 10);
-            books.put("Joba", 42);
-            books.put("Salamo", 150);
-            books.put("Ohabolana", 31);
-            books.put("Mpitoriteny", 12);
-            books.put("Tononkiran’i Solomona", 8);
-            books.put("Isaia", 66);
-            books.put("Jeremia", 52);
-            books.put("Fitomaniana", 5);
-            books.put("Ezekiela", 48);
-            books.put("Daniela", 12);
-            books.put("Hosea", 14);
-            books.put("Joela", 3);
-            books.put("Amosa", 9);
-            books.put("Obadia", 1);
-            books.put("Jona", 4);
-            books.put("Mika", 7);
-            books.put("Nahoma", 3);
-            books.put("Habakoka", 3);
-            books.put("Zefania", 3);
-            books.put("Hagay", 2);
-            books.put("Zakaria", 14);
-            books.put("Malakia", 4);
-            books.put("Matio", 28);
-            books.put("Marka", 16);
-            books.put("Lioka", 24);
-            books.put("Jaona", 21);
-            books.put("Asan’ny Apostoly", 28);
-            books.put("Romanina", 16);
-            books.put("1 Korintianina", 16);
-            books.put("2 Korintianina", 13);
-            books.put("Galatianina", 6);
-            books.put("Efesianina", 6);
-            books.put("Filipianina", 4);
-            books.put("Kolosianina", 4);
-            books.put("1 Tesalonianina", 5);
-            books.put("2 Tesalonianina", 3);
-            books.put("1 Timoty", 6);
-            books.put("2 Timoty", 4);
-            books.put("Titosy", 3);
-            books.put("Filemona", 1);
-            books.put("Hebreo", 13);
-            books.put("Jakoba", 5);
-            books.put("1 Petera", 5);
-            books.put("2 Petera", 3);
-            books.put("1 Jaona", 5);
-            books.put("2 Jaona", 1);
-            books.put("3 Jaona", 1);
-            books.put("Joda", 1);
-            books.put("Apokalypsy", 22);
-            break;
-        case 40:
-            books.put("ዘፍጥረት", 50);
-            books.put("ዘፀአት", 40);
-            books.put("ዘሌዋውያን", 27);
-            books.put("ዘኍልቍ", 36);
-            books.put("ዘዳግም", 34);
-            books.put("ኢያሱ", 24);
-            books.put("መሳፍንት", 21);
-            books.put("ሩት", 4);
-            books.put("1 ሳሙኤል", 31);
-            books.put("2 ሳሙኤል", 24);
-            books.put("1 ነገሥት", 22);
-            books.put("2 ነገሥት", 25);
-            books.put("1 ዜና መዋዕል", 29);
-            books.put("2 ዜና መዋዕል", 36);
-            books.put("ዕዝራ", 10);
-            books.put("ነህምያ", 13);
-            books.put("አስቴር", 10);
-            books.put("ኢዮብ", 42);
-            books.put("መዝሙር", 150);
-            books.put("ምሳሌ", 31);
-            books.put("መክብብ", 12);
-            books.put("ማሕልየ መሓልይ", 8);
-            books.put("ኢሳይያስ", 66);
-            books.put("ኤርምያስ", 52);
-            books.put("ሰቆቃወ ኤርምያስ", 5);
-            books.put("ሕዝቅኤል", 48);
-            books.put("ዳንኤል", 12);
-            books.put("ሆሴዕ", 14);
-            books.put("ኢዩኤል", 3);
-            books.put("አሞጽ", 9);
-            books.put("አብድዩ", 1);
-            books.put("ዮናስ", 4);
-            books.put("ሚክያስ", 7);
-            books.put("ናሆም", 3);
-            books.put("ዕንባቆም", 3);
-            books.put("ሶፎንያስ", 3);
-            books.put("ሐጌ", 2);
-            books.put("ዘካርያስ", 14);
-            books.put("ሚልክያስ", 4);
-            books.put("ማቴዎስ", 28);
-            books.put("ማርቆስ", 16);
-            books.put("ሉቃስ", 24);
-            books.put("ዮሐንስ", 21);
-            books.put("የሐዋርያት ሥራ", 28);
-            books.put("ሮም", 16);
-            books.put("1 ቆሮንቶስ", 16);
-            books.put("2 ቆሮንቶስ", 13);
-            books.put("ገላትያ", 6);
-            books.put("ኤፌሶን", 6);
-            books.put("ፊልጵስዩስ", 4);
-            books.put("ቈላስይስ", 4);
-            books.put("1 ተሰሎንቄ", 5);
-            books.put("2 ተሰሎንቄ", 3);
-            books.put("1 ጢሞቴዎስ", 6);
-            books.put("2 ጢሞቴዎስ", 4);
-            books.put("ቲቶ", 3);
-            books.put("ፊልሞና", 1);
-            books.put("ዕብራውያን", 13);
-            books.put("ያዕቆብ", 5);
-            books.put("1 ጴጥሮስ", 5);
-            books.put("2 ጴጥሮስ", 3);
-            books.put("1 ዮሐንስ", 5);
-            books.put("2 ዮሐንስ", 1);
-            books.put("3 ዮሐንስ", 1);
-            books.put("ይሁዳ", 1);
-            books.put("ራእይ", 22);
-            break;
-        case 41:
-            books.put("Chuàngshìjì", 50);
-            books.put("Chū'āijíjì", 40);
-            books.put("Lìwèijì", 27);
-            books.put("Mínshùjì", 36);
-            books.put("Shēnmìngjì", 34);
-            books.put("Yuēshūyàjì", 24);
-            books.put("Shìshījì", 21);
-            books.put("Lùdéjì", 4);
-            books.put("Sāmŭ'ĕrjì Shàng", 31);
-            books.put("Sāmŭ'ĕrjì Xià", 24);
-            books.put("Lièwángjì Shàng", 22);
-            books.put("Lièwángjì Xià", 25);
-            books.put("Lìdàizhì Shàng", 29);
-            books.put("Lìdàizhì Xià", 36);
-            books.put("Yĭsīlājì", 10);
-            books.put("Níxīmĭjì", 13);
-            books.put("Yĭsītiĕjì", 10);
-            books.put("Yuēbójì", 42);
-            books.put("Shīpiān", 150);
-            books.put("Zhēnyán", 31);
-            books.put("Chuándàoshū", 12);
-            books.put("Yăgē", 8);
-            books.put("Yĭsàiyàshū", 66);
-            books.put("Yēlìmĭshū", 52);
-            books.put("Yēlìmĭ'āigē", 5);
-            books.put("Yĭxījiéshū", 48);
-            books.put("Dànyĭlĭshū", 12);
-            books.put("Héxī'āshū", 14);
-            books.put("Yuē'ĕrshū", 3);
-            books.put("Āmósīshū", 9);
-            books.put("Ébādĭyàshū", 1);
-            books.put("Yuēnáshū", 4);
-            books.put("Míjiāshū", 7);
-            books.put("Nàhóngshū", 3);
-            books.put("Hābāgŭshū", 3);
-            books.put("Xīfānyăshū", 3);
-            books.put("Hāgāishū", 2);
-            books.put("Sājiālìyàshū", 14);
-            books.put("Mălājīshū", 4);
-            books.put("Mătài Fúyīn", 28);
-            books.put("Măkĕ Fúyīn", 16);
-            books.put("Lùjiā Fúyīn", 24);
-            books.put("Yuēhàn Fúyīn", 21);
-            books.put("Shĭtú Xíngchuán", 28);
-            books.put("Luómăshū", 16);
-            books.put("Gēlínduō Qiánshū", 16);
-            books.put("Gēlínduō Hòushū", 13);
-            books.put("Jiālātàishū", 6);
-            books.put("Yĭfúsuŏshū", 6);
-            books.put("Féilìbĭshū", 4);
-            books.put("Gēluóxīshū", 4);
-            books.put("Tiĕsāluóníjiā Qiánshū", 5);
-            books.put("Tiĕsāluóníjiā Hòushū", 3);
-            books.put("Tímótài Qiánshū", 6);
-            books.put("Tímótài Hòushū", 4);
-            books.put("Tíduōshū", 3);
-            books.put("Féilìménshū", 1);
-            books.put("Xībóláishū", 13);
-            books.put("Yăgèshū", 5);
-            books.put("Bĭdé Qiánshū", 5);
-            books.put("Bĭdé Hòushū", 3);
-            books.put("Yuēhàn Yīshū", 5);
-            books.put("Yuēhàn Èrshū", 1);
-            books.put("Yuēhàn Sānshū", 1);
-            books.put("Yóudàshū", 1);
-            books.put("Qĭshìlù", 22);
-            break;
-        case 42:
-            books.put("1. Mojsijeva", 50);
-            books.put("2. Mojsijeva", 40);
-            books.put("3. Mojsijeva", 27);
-            books.put("4. Mojsijeva", 36);
-            books.put("5. Mojsijeva", 34);
-            books.put("Jošua", 24);
-            books.put("Suci", 21);
-            books.put("Ruta", 4);
-            books.put("1. Samuelova", 31);
-            books.put("2. Samuelova", 24);
-            books.put("1. Kraljevima", 22);
-            books.put("2. Kraljevima", 25);
-            books.put("1. Ljetopisa", 29);
-            books.put("2. Ljetopisa", 36);
-            books.put("Ezra", 10);
-            books.put("Nehemija", 13);
-            books.put("Estera", 10);
-            books.put("Job", 42);
-            books.put("Psalam", 150);
-            books.put("Mudre izreke", 31);
-            books.put("Propovjednik", 12);
-            books.put("Pjesma nad pjesmama", 8);
-            books.put("Izaija", 66);
-            books.put("Jeremija", 52);
-            books.put("Tužaljke", 5);
-            books.put("Ezekijel", 48);
-            books.put("Danijel", 12);
-            books.put("Hošea", 14);
-            books.put("Joel", 3);
-            books.put("Amos", 9);
-            books.put("Obadija", 1);
-            books.put("Jona", 4);
-            books.put("Mihej", 7);
-            books.put("Nahum", 3);
-            books.put("Habakuk", 3);
-            books.put("Sefanija", 3);
-            books.put("Hagaj", 2);
-            books.put("Zaharija", 14);
-            books.put("Malahija", 4);
-            books.put("Matej", 28);
-            books.put("Marko", 16);
-            books.put("Luka", 24);
-            books.put("Ivan", 21);
-            books.put("Djela apostolska", 28);
-            books.put("Rimljanima", 16);
-            books.put("1. Korinćanima", 16);
-            books.put("2. Korinćanima", 13);
-            books.put("Galaćanima", 6);
-            books.put("Efežanima", 6);
-            books.put("Filipljanima", 4);
-            books.put("Kološanima", 4);
-            books.put("1. Solunjanima", 5);
-            books.put("2. Solunjanima", 3);
-            books.put("1. Timoteju", 6);
-            books.put("2. Timoteju", 4);
-            books.put("Titu", 3);
-            books.put("Filemonu", 1);
-            books.put("Hebrejima", 13);
-            books.put("Jakov", 5);
-            books.put("1. Petrova", 5);
-            books.put("2. Petrova", 3);
-            books.put("1. Ivanova", 5);
-            books.put("2. Ivanova", 1);
-            books.put("3. Ivanova", 1);
-            books.put("Juda", 1);
-            books.put("Otkrivenje", 22);
-            break;
-        case 43:
-            books.put("Башталыш", 50);
-            books.put("Чыгуу", 40);
-            books.put("Лебилер", 27);
-            books.put("Сандар", 36);
-            books.put("Мыйзам", 34);
-            books.put("Жашыя", 24);
-            books.put("Бийлер", 21);
-            books.put("Рут", 4);
-            books.put("1 Шемуел", 31);
-            books.put("2 Шемуел", 24);
-            books.put("1 Падышалар", 22);
-            books.put("2 Падышалар", 25);
-            books.put("1 Жылнаама", 29);
-            books.put("2 Жылнаама", 36);
-            books.put("Эзра", 10);
-            books.put("Некемия", 13);
-            books.put("Эстер", 10);
-            books.put("Аюп", 42);
-            books.put("Забур", 150);
-            books.put("Накыл сөздөр", 31);
-            books.put("Насаатчы", 12);
-            books.put("Сулаймандын ыры", 8);
-            books.put("Ышая", 66);
-            books.put("Жеремия", 52);
-            books.put("Жеремиянын ыйы", 5);
-            books.put("Жезекиел", 48);
-            books.put("Даниел", 12);
-            books.put("Ошуя", 14);
-            books.put("Жоел", 3);
-            books.put("Амос", 9);
-            books.put("Обадия", 1);
-            books.put("Жунус", 4);
-            books.put("Микей", 7);
-            books.put("Накум", 3);
-            books.put("Хабакук", 3);
-            books.put("Сепания", 3);
-            books.put("Акай", 2);
-            books.put("Закарыя", 14);
-            books.put("Малаки", 4);
-            books.put("Матай", 28);
-            books.put("Марк", 16);
-            books.put("Лука", 24);
-            books.put("Жакан", 21);
-            books.put("Элчилер", 28);
-            books.put("Римдиктер", 16);
-            books.put("1 Корунттуктар", 16);
-            books.put("2 Корунттуктар", 13);
-            books.put("Галатиялыктар", 6);
-            books.put("Эфестиктер", 6);
-            books.put("Филипиликтер", 4);
-            books.put("Колосалыктар", 4);
-            books.put("1 Тесалоникалыктар", 5);
-            books.put("2 Тесалоникалыктар", 3);
-            books.put("1 Тиметей", 6);
-            books.put("2 Тиметей", 4);
-            books.put("Титке", 3);
-            books.put("Филемон", 1);
-            books.put("Еврейлер", 13);
-            books.put("Жакып", 5);
-            books.put("1 Петир", 5);
-            books.put("2 Петир", 3);
-            books.put("1 Жакан", 5);
-            books.put("2 Жакан", 1);
-            books.put("3 Жакан", 1);
-            books.put("Жүйүт", 1);
-            books.put("Аян", 22);
-            break;
-        case 44:
-            books.put("Genesis", 50);
-            books.put("Exodo", 40);
-            books.put("Levitico", 27);
-            books.put("Numeros", 36);
-            books.put("Deuteronomio", 34);
-            books.put("Josue", 24);
-            books.put("Uk-ukom", 21);
-            books.put("Ruth", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Ar-ari", 22);
-            books.put("2 Ar-ari", 25);
-            books.put("1 Cronicas", 29);
-            books.put("2 Cronicas", 36);
-            books.put("Esdras", 10);
-            books.put("Nehemias", 13);
-            books.put("Ester", 10);
-            books.put("Job", 42);
-            books.put("Salmo", 150);
-            books.put("Proverbio", 31);
-            books.put("Eclesiastes", 12);
-            books.put("Kanta ni Solomon", 8);
-            books.put("Isaias", 66);
-            books.put("Jeremias", 52);
-            books.put("Un-unnoy", 5);
-            books.put("Ezequiel", 48);
-            books.put("Daniel", 12);
-            books.put("Oseas", 14);
-            books.put("Joel", 3);
-            books.put("Amos", 9);
-            books.put("Abdias", 1);
-            books.put("Jonas", 4);
-            books.put("Mikias", 7);
-            books.put("Nahum", 3);
-            books.put("Habakuk", 3);
-            books.put("Sofonias", 3);
-            books.put("Haggeo", 2);
-            books.put("Zacarias", 14);
-            books.put("Malakias", 4);
-            books.put("Mateo", 28);
-            books.put("Marcos", 16);
-            books.put("Lucas", 24);
-            books.put("Juan", 21);
-            books.put("Aramid", 28);
-            books.put("Roma", 16);
-            books.put("1 Corinto", 16);
-            books.put("2 Corinto", 13);
-            books.put("Galacia", 6);
-            books.put("Efeso", 6);
-            books.put("Filipos", 4);
-            books.put("Colosas", 4);
-            books.put("1 Tesalonica", 5);
-            books.put("2 Tesalonica", 3);
-            books.put("1 Timoteo", 6);
-            books.put("2 Timoteo", 4);
-            books.put("Tito", 3);
-            books.put("Filemon", 1);
-            books.put("Hebreo", 13);
-            books.put("Santiago", 5);
-            books.put("1 Pedro", 5);
-            books.put("2 Pedro", 3);
-            books.put("1 Juan", 5);
-            books.put("2 Juan", 1);
-            books.put("3 Juan", 1);
-            books.put("Judas", 1);
-            books.put("Apocalipsis", 22);
-            break;
-        case 45:
-            books.put("Gènesi", 50);
-            books.put("Èxode", 40);
-            books.put("Levític", 27);
-            books.put("Nombres", 36);
-            books.put("Deuteronomi", 34);
-            books.put("Josuè", 24);
-            books.put("Jutges", 21);
-            books.put("Rut", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Reis", 22);
-            books.put("2 Reis", 25);
-            books.put("1 Cròniques", 29);
-            books.put("2 Cròniques", 36);
-            books.put("Esdres", 10);
-            books.put("Nehemies", 13);
-            books.put("Ester", 10);
-            books.put("Job", 42);
-            books.put("Salms", 150);
-            books.put("Proverbis", 31);
-            books.put("Cohèlet", 12);
-            books.put("Càntic", 8);
-            books.put("Isaïes", 66);
-            books.put("Jeremies", 52);
-            books.put("Lamentacions", 5);
-            books.put("Ezequiel", 48);
-            books.put("Daniel", 12);
-            books.put("Osees", 14);
-            books.put("Joel", 3);
-            books.put("Amós", 9);
-            books.put("Abdies", 1);
-            books.put("Jonàs", 4);
-            books.put("Miquees", 7);
-            books.put("Nahum", 3);
-            books.put("Habacuc", 3);
-            books.put("Sofonies", 3);
-            books.put("Ageu", 2);
-            books.put("Zacaries", 14);
-            books.put("Malaquies", 4);
-            books.put("Mateu", 28);
-            books.put("Marc", 16);
-            books.put("Lluc", 24);
-            books.put("Joan", 21);
-            books.put("Fets Apòstols", 28);
-            books.put("Romans", 16);
-            books.put("1 Corintis", 16);
-            books.put("2 Corintis", 13);
-            books.put("Gàlates", 6);
-            books.put("Efesis", 6);
-            books.put("Filipencs", 4);
-            books.put("Colossencs", 4);
-            books.put("1 Tessalonicencs", 5);
-            books.put("2 Tessalonicencs", 3);
-            books.put("1 Timoteu", 6);
-            books.put("2 Timoteu", 4);
-            books.put("Titus", 3);
-            books.put("Filèmon", 1);
-            books.put("Hebreus", 13);
-            books.put("Jaume", 5);
-            books.put("1 Pere", 5);
-            books.put("2 Pere", 3);
-            books.put("1 Joan", 5);
-            books.put("2 Joan", 1);
-            books.put("3 Joan", 1);
-            books.put("Judes", 1);
-            books.put("Apocalipsi", 22);
-            break;
-        case 46:
-            books.put("創世記", 50);
-            books.put("出埃及記", 40);
-            books.put("利未記", 27);
-            books.put("民數記", 36);
-            books.put("申命記", 34);
-            books.put("約書亞記", 24);
-            books.put("士師記", 21);
-            books.put("路得記", 4);
-            books.put("撒母耳記上", 31);
-            books.put("撒母耳記下", 24);
-            books.put("列王紀上", 22);
-            books.put("列王紀下", 25);
-            books.put("歷代志上", 29);
-            books.put("歷代志下", 36);
-            books.put("以斯拉記", 10);
-            books.put("尼希米記", 13);
-            books.put("以斯帖記", 10);
-            books.put("約伯記", 42);
-            books.put("詩篇", 150);
-            books.put("箴言", 31);
-            books.put("傳道書", 12);
-            books.put("雅歌", 8);
-            books.put("以賽亞書", 66);
-            books.put("耶利米書", 52);
-            books.put("耶利米哀歌", 5);
-            books.put("以西結書", 48);
-            books.put("但以理書", 12);
-            books.put("何西阿書", 14);
-            books.put("約珥書", 3);
-            books.put("阿摩司書", 9);
-            books.put("俄巴底亞書", 1);
-            books.put("約拿書", 4);
-            books.put("彌迦書", 7);
-            books.put("那鴻書", 3);
-            books.put("哈巴谷書", 3);
-            books.put("西番雅書", 3);
-            books.put("哈該書", 2);
-            books.put("撒迦利亞書", 14);
-            books.put("瑪拉基書", 4);
-            books.put("馬太福音", 28);
-            books.put("馬可福音", 16);
-            books.put("路加福音", 24);
-            books.put("約翰福音", 21);
-            books.put("使徒行傳", 28);
-            books.put("羅馬書", 16);
-            books.put("哥林多前書", 16);
-            books.put("哥林多後書", 13);
-            books.put("加拉太書", 6);
-            books.put("以弗所書", 6);
-            books.put("腓立比書", 4);
-            books.put("歌羅西書", 4);
-            books.put("帖撒羅尼迦前書", 5);
-            books.put("帖撒羅尼迦後書", 3);
-            books.put("提摩太前書", 6);
-            books.put("提摩太後書", 4);
-            books.put("提多書", 3);
-            books.put("腓利門書", 1);
-            books.put("希伯來書", 13);
-            books.put("雅各書", 5);
-            books.put("彼得前書", 5);
-            books.put("彼得後書", 3);
-            books.put("約翰一書", 5);
-            books.put("約翰二書", 1);
-            books.put("約翰三書", 1);
-            books.put("猶大書", 1);
-            books.put("啟示錄", 22);
-            break;
-        case 47:
-            books.put("मत्ती", 28);
-            books.put("मरकुस", 16);
-            books.put("लूका", 24);
-            books.put("यूहन्ना", 21);
-            books.put("प्रेषितों", 28);
-            books.put("रोमियों", 16);
-            books.put("1 कुरिंथियों", 16);
-            books.put("2 कुरिंथियों", 13);
-            books.put("गलातियों", 6);
-            books.put("इफिसियों", 6);
-            books.put("फिलिप्पियों", 4);
-            books.put("कुलुस्सियों", 4);
-            books.put("1 थिस्सलुनीकियों", 5);
-            books.put("2 थिस्सलुनीकियों", 3);
-            books.put("1 तीमुथियुस", 6);
-            books.put("2 तीमुथियुस", 4);
-            books.put("तीतुस", 3);
-            books.put("फिलेमोन", 1);
-            books.put("इब्रानियों", 13);
-            books.put("याकूब", 5);
-            books.put("1 पतरस", 5);
-            books.put("2 पतरस", 3);
-            books.put("1 यूहन्ना", 5);
-            books.put("2 यूहन्ना", 1);
-            books.put("3 यूहन्ना", 1);
-            books.put("यहूदा", 1);
-            books.put("प्रकाशितवाक्य", 22);
-            break;
-        case 48:
-            books.put("Genesis", 50);
-            books.put("Exodus", 40);
-            books.put("Leviticus", 27);
-            books.put("Numeri", 36);
-            books.put("Deuteronomium", 34);
-            books.put("Yosua", 24);
-            books.put("Atemmufo", 21);
-            books.put("Rut", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Ahene", 22);
-            books.put("2 Ahene", 25);
-            books.put("1 Beresosɛm", 29);
-            books.put("2 Beresosɛm", 36);
-            books.put("Esra", 10);
-            books.put("Nehemia", 13);
-            books.put("Ester", 10);
-            books.put("Hiob", 42);
-            books.put("Dwom", 150);
-            books.put("Mmebusɛm", 31);
-            books.put("Ɔsɛnkafo", 12);
-            books.put("Nnwom mu Dwom", 8);
-            books.put("Yesaia", 66);
-            books.put("Yeremia", 52);
-            books.put("Kwadwom", 5);
-            books.put("Hesekiel", 48);
-            books.put("Daniel", 12);
-            books.put("Hosea", 14);
-            books.put("Yoel", 3);
-            books.put("Amos", 9);
-            books.put("Obadia", 1);
-            books.put("Yona", 4);
-            books.put("Mika", 7);
-            books.put("Nahum", 3);
-            books.put("Habakuk", 3);
-            books.put("Sefania", 3);
-            books.put("Hagai", 2);
-            books.put("Sakaria", 14);
-            books.put("Malaki", 4);
-            books.put("Mateo", 28);
-            books.put("Marko", 16);
-            books.put("Luka", 24);
-            books.put("Yohane", 21);
-            books.put("Asomafo Nnwuma", 28);
-            books.put("Romafo", 16);
-            books.put("1 Korintofo", 16);
-            books.put("2 Korintofo", 13);
-            books.put("Galatifo", 6);
-            books.put("Efesofo", 6);
-            books.put("Filipifo", 4);
-            books.put("Kolosefo", 4);
-            books.put("1 Tesalonikafo", 5);
-            books.put("2 Tesalonikafo", 3);
-            books.put("1 Timoteo", 6);
-            books.put("2 Timoteo", 4);
-            books.put("Tito", 3);
-            books.put("Filemon", 1);
-            books.put("Hebrifo", 13);
-            books.put("Yakobo", 5);
-            books.put("1 Petro", 5);
-            books.put("2 Petro", 3);
-            books.put("1 Yohane", 5);
-            books.put("2 Yohane", 1);
-            books.put("3 Yohane", 1);
-            books.put("Yuda", 1);
-            books.put("Adiyisɛm", 22);
-            break;
-        case 49:
-            books.put("Jẹ́nẹ́sísì", 50);
-            books.put("Ẹ́kísódù", 40);
-            books.put("Léfítíkù", 27);
-            books.put("Númérì", 36);
-            books.put("Diutarónómì", 34);
-            books.put("Jóṣúà", 24);
-            books.put("Àwọn Onídàájọ́", 21);
-            books.put("Rúùtù", 4);
-            books.put("1 Sámúẹ́lì", 31);
-            books.put("2 Sámúẹ́lì", 24);
-            books.put("1 Àwọn Ọba", 22);
-            books.put("2 Àwọn Ọba", 25);
-            books.put("1 Kíróníkà", 29);
-            books.put("2 Kíróníkà", 36);
-            books.put("Ẹ́sírà", 10);
-            books.put("Nehemáyà", 13);
-            books.put("Ẹ́sítérì", 10);
-            books.put("Jóòbù", 42);
-            books.put("Sáàmù", 150);
-            books.put("Òwe", 31);
-            books.put("Oníwàásù", 12);
-            books.put("Orin Sólómọ́nì", 8);
-            books.put("Aísáyà", 66);
-            books.put("Jeremáyà", 52);
-            books.put("Ìdárò", 5);
-            books.put("Ìsíkíẹ́lì", 48);
-            books.put("Dáníẹ́lì", 12);
-            books.put("Hóséà", 14);
-            books.put("Jóẹ́lì", 3);
-            books.put("Ámósì", 9);
-            books.put("Ọbadáyà", 1);
-            books.put("Jónà", 4);
-            books.put("Míkà", 7);
-            books.put("Náhúmù", 3);
-            books.put("Hábákúkù", 3);
-            books.put("Sefanáyà", 3);
-            books.put("Hágáì", 2);
-            books.put("Sekaráyà", 14);
-            books.put("Málákì", 4);
-            books.put("Mátíù", 28);
-            books.put("Máàkù", 16);
-            books.put("Lúùkù", 24);
-            books.put("Jòhánù", 21);
-            books.put("Ìṣe", 28);
-            books.put("Róòmù", 16);
-            books.put("1 Kọ́ríńtì", 16);
-            books.put("2 Kọ́ríńtì", 13);
-            books.put("Gálátíà", 6);
-            books.put("Éfésù", 6);
-            books.put("Fílípì", 4);
-            books.put("Kólósè", 4);
-            books.put("1 Tẹsalóníkà", 5);
-            books.put("2 Tẹsalóníkà", 3);
-            books.put("1 Tímótì", 6);
-            books.put("2 Tímótì", 4);
-            books.put("Títù", 3);
-            books.put("Fílémónì", 1);
-            books.put("Hébérù", 13);
-            books.put("Jákọ́bù", 5);
-            books.put("1 Pétérù", 5);
-            books.put("2 Pétérù", 3);
-            books.put("1 Jòhánù", 5);
-            books.put("2 Jòhánù", 1);
-            books.put("3 Jòhánù", 1);
-            books.put("Júúdà", 1);
-            books.put("Ìṣípayá", 22);
-            break;
-        case 50:
-            books.put("1 Mosebog", 50);
-            books.put("2 Mosebog", 40);
-            books.put("3 Mosebog", 27);
-            books.put("4 Mosebog", 36);
-            books.put("5 Mosebog", 34);
-            books.put("Josua", 24);
-            books.put("Dommerne", 21);
-            books.put("Rut", 4);
-            books.put("1 Samuel", 31);
-            books.put("2 Samuel", 24);
-            books.put("1 Kongebog", 22);
-            books.put("2 Kongebog", 25);
-            books.put("1 Krønikebog", 29);
-            books.put("2 Krønikebog", 36);
-            books.put("Ezra", 10);
-            books.put("Nehemias", 13);
-            books.put("Ester", 10);
-            books.put("Job", 42);
-            books.put("Salmerne", 150);
-            books.put("Ordsprogene", 31);
-            books.put("Prædikeren", 12);
-            books.put("Højsangen", 8);
-            books.put("Esajas", 66);
-            books.put("Jeremias", 52);
-            books.put("Klagesangene", 5);
-            books.put("Ezekiel", 48);
-            books.put("Daniel", 12);
-            books.put("Hoseas", 14);
-            books.put("Joel", 3);
-            books.put("Amos", 9);
-            books.put("Obadias", 1);
-            books.put("Jonas", 4);
-            books.put("Mika", 7);
-            books.put("Nahum", 3);
-            books.put("Habakkuk", 3);
-            books.put("Zefanias", 3);
-            books.put("Haggaj", 2);
-            books.put("Zakarias", 14);
-            books.put("Malakias", 4);
-            books.put("Mattæus", 28);
-            books.put("Markus", 16);
-            books.put("Lukas", 24);
-            books.put("Johannes", 21);
-            books.put("Apostelgerninger", 28);
-            books.put("Romerne", 16);
-            books.put("1 Korinther", 16);
-            books.put("2 Korinther", 13);
-            books.put("Galaterne", 6);
-            books.put("Efeserne", 6);
-            books.put("Filipperne", 4);
-            books.put("Kolossenserne", 4);
-            books.put("1 Thessaloniker", 5);
-            books.put("2 Thessaloniker", 3);
-            books.put("1 Timoteus", 6);
-            books.put("2 Timoteus", 4);
-            books.put("Titus", 3);
-            books.put("Filemon", 1);
-            books.put("Hebræerne", 13);
-            books.put("Jakob", 5);
-            books.put("1 Peter", 5);
-            books.put("2 Peter", 3);
-            books.put("1 Johannes", 5);
-            books.put("2 Johannes", 1);
-            books.put("3 Johannes", 1);
-            books.put("Judas", 1);
-            books.put("Åbenbaringen", 22);
-            break;
-        case 51:
-            books.put("Mwanzo", 50);
-            books.put("Kutoka", 40);
-            books.put("Mambo ya Walawi", 27);
-            books.put("Hesabu", 36);
-            books.put("Kumbukumbu la Torati", 34);
-            books.put("Yoshua", 24);
-            books.put("Waamuzi", 21);
-            books.put("Ruthu", 4);
-            books.put("1 Samweli", 31);
-            books.put("2 Samweli", 24);
-            books.put("1 Wafalme", 22);
-            books.put("2 Wafalme", 25);
-            books.put("1 Nyakati", 29);
-            books.put("2 Nyakati", 36);
-            books.put("Ezra", 10);
-            books.put("Nehemia", 13);
-            books.put("Esta", 10);
-            books.put("Ayubu", 42);
-            books.put("Zaburi", 150);
-            books.put("Methali", 31);
-            books.put("Mhubiri", 12);
-            books.put("Wimbo wa Sulemani", 8);
-            books.put("Isaya", 66);
-            books.put("Yeremia", 52);
-            books.put("Maombolezo", 5);
-            books.put("Ezekieli", 48);
-            books.put("Danieli", 12);
-            books.put("Hosea", 14);
-            books.put("Yoeli", 3);
-            books.put("Amosi", 9);
-            books.put("Obadia", 1);
-            books.put("Yona", 4);
-            books.put("Mika", 7);
-            books.put("Nahumu", 3);
-            books.put("Habakuki", 3);
-            books.put("Sefania", 3);
-            books.put("Hagai", 2);
-            books.put("Zekaria", 14);
-            books.put("Malaki", 4);
-            books.put("Mathayo", 28);
-            books.put("Marko", 16);
-            books.put("Luka", 24);
-            books.put("Yohana", 21);
-            books.put("Matendo", 28);
-            books.put("Waroma", 16);
-            books.put("1 Wakorintho", 16);
-            books.put("2 Wakorintho", 13);
-            books.put("Wagalatia", 6);
-            books.put("Waefeso", 6);
-            books.put("Wafilipi", 4);
-            books.put("Wakolosai", 4);
-            books.put("1 Wathesalonike", 5);
-            books.put("2 Wathesalonike", 3);
-            books.put("1 Timotheo", 6);
-            books.put("2 Timotheo", 4);
-            books.put("Tito", 3);
-            books.put("Filemoni", 1);
-            books.put("Waebrania", 13);
-            books.put("Yakobo", 5);
-            books.put("1 Petro", 5);
-            books.put("2 Petro", 3);
-            books.put("1 Yohana", 5);
-            books.put("2 Yohana", 1);
-            books.put("3 Yohana", 1);
-            books.put("Yuda", 1);
-            books.put("Ufunuo", 22);
-            break;
-        case 52:
-            books.put("დაბადება", 50);
-            books.put("გამოსვლა", 40);
-            books.put("ლევიანები", 27);
-            books.put("რიცხვები", 36);
-            books.put("კანონი", 34);
-            books.put("იესო ნავეს ძე", 24);
-            books.put("მსაჯულები", 21);
-            books.put("რუთი", 4);
-            books.put("1 სამუელი", 31);
-            books.put("2 სამუელი", 24);
-            books.put("1 მეფეები", 22);
-            books.put("2 მეფეები", 25);
-            books.put("1 მატიანე", 29);
-            books.put("2 მატიანე", 36);
-            books.put("ეზრა", 10);
-            books.put("ნეემია", 13);
-            books.put("ესთერი", 10);
-            books.put("იობი", 42);
-            books.put("ფსალმუნები", 150);
-            books.put("იგავები", 31);
-            books.put("ეკლესიასტე", 12);
-            books.put("ქებათა ქება", 8);
-            books.put("ესაია", 66);
-            books.put("იერემია", 52);
-            books.put("გოდება", 5);
-            books.put("ეზეკიელი", 48);
-            books.put("დანიელი", 12);
-            books.put("ოსია", 14);
-            books.put("იოელი", 3);
-            books.put("ამოსი", 9);
-            books.put("აბდია", 1);
-            books.put("იონა", 4);
-            books.put("მიქა", 7);
-            books.put("ნაუმი", 3);
-            books.put("აბაკუმი", 3);
-            books.put("სოფონია", 3);
-            books.put("ანგია", 2);
-            books.put("ზაქარია", 14);
-            books.put("მალაქია", 4);
-            books.put("მათე", 28);
-            books.put("მარკოზი", 16);
-            books.put("ლუკა", 24);
-            books.put("იოანე", 21);
-            books.put("საქმეები", 28);
-            books.put("რომაელები", 16);
-            books.put("1 კორინთელები", 16);
-            books.put("2 კორინთელები", 13);
-            books.put("გალატელები", 6);
-            books.put("ეფესოელები", 6);
-            books.put("ფილიპელები", 4);
-            books.put("კოლოსელები", 4);
-            books.put("1 თესალონიკელები", 5);
-            books.put("2 თესალონიკელები", 3);
-            books.put("1 ტიმოთე", 6);
-            books.put("2 ტიმოთე", 4);
-            books.put("ტიტე", 3);
-            books.put("ფილიმონი", 1);
-            books.put("ებრაელები", 13);
-            books.put("იაკობი", 5);
-            books.put("1 პეტრე", 5);
-            books.put("2 პეტრე", 3);
-            books.put("1 იოანე", 5);
-            books.put("2 იოანე", 1);
-            books.put("3 იოანე", 1);
-            books.put("იუდა", 1);
-            books.put("გამოცხადება", 22);
-            break;
-        case 53:
-            books.put("מתי", 28);
-            books.put("מרקוס", 16);
-            books.put("לוקס", 24);
-            books.put("יוחנן", 21);
-            books.put("מעשי השליחים", 28);
-            books.put("רומים", 16);
-            books.put("קורינתים א’", 16);
-            books.put("קורינתים ב’", 13);
-            books.put("גלטים", 6);
-            books.put("אפסים", 6);
-            books.put("פיליפים", 4);
-            books.put("קולוסים", 4);
-            books.put("תסלוניקים א’", 5);
-            books.put("תסלוניקים ב’", 3);
-            books.put("טימותיאוס א’", 6);
-            books.put("טימותיאוס ב’", 4);
-            books.put("טיטוס", 3);
-            books.put("פילימון", 1);
-            books.put("עברים", 13);
-            books.put("יעקב", 5);
-            books.put("פטרוס א’", 5);
-            books.put("פטרוס ב’", 3);
-            books.put("יוחנן א’.", 5);
-            books.put("יוחנן ב’.", 1);
-            books.put("יוחנן ג’.", 1);
-            books.put("יהודה", 1);
-            books.put("ההתגלות", 22);
-            break;
-        case 54:
-            books.put("Yaradılış", 50);
-            books.put("Çıxış", 40);
-            books.put("Lavililər", 27);
-            books.put("Saylar", 36);
-            books.put("Qanunun təkrarı", 34);
-            books.put("Yuşə", 24);
-            books.put("Hakimlər", 21);
-            books.put("Rut", 4);
-            books.put("1 İşmuil", 31);
-            books.put("2 İşmuil", 24);
-            books.put("1 Padşahlar", 22);
-            books.put("2 Padşahlar", 25);
-            books.put("1 Salnamələr", 29);
-            books.put("2 Salnamələr", 36);
-            books.put("Üzeyir", 10);
-            books.put("Nəhəmya", 13);
-            books.put("Əstər", 10);
-            books.put("Əyyub", 42);
-            books.put("Zəbur", 150);
-            books.put("Məsəllər", 31);
-            books.put("Vaiz", 12);
-            books.put("Nəğmələr nəğməsi", 8);
-            books.put("Əşiya", 66);
-            books.put("Ərəmya", 52);
-            books.put("Mərsiyələr", 5);
-            books.put("Hizqiyal", 48);
-            books.put("Dənyal", 12);
-            books.put("Huşə", 14);
-            books.put("Yuil", 3);
-            books.put("Amus", 9);
-            books.put("Əbdiya", 1);
-            books.put("Yunus", 4);
-            books.put("Mikə", 7);
-            books.put("Nahum", 3);
-            books.put("Həbquq", 3);
-            books.put("Səfənya", 3);
-            books.put("Həqqay", 2);
-            books.put("Zəkəriyyə", 14);
-            books.put("Məlaki", 4);
-            books.put("Mətta", 28);
-            books.put("Mark", 16);
-            books.put("Luka", 24);
-            books.put("Yəhya", 21);
-            books.put("Həvarilərin işləri", 28);
-            books.put("Romalılara", 16);
-            books.put("1 Korinflilərə", 16);
-            books.put("2 Korinflilərə", 13);
-            books.put("Qalatiyalılara", 6);
-            books.put("Efeslilərə", 6);
-            books.put("Filippililərə", 4);
-            books.put("Koloslulara", 4);
-            books.put("1 Salonikililərə", 5);
-            books.put("2 Salonikililərə", 3);
-            books.put("1 Timutiyə", 6);
-            books.put("2 Timutiyə", 4);
-            books.put("Titusa", 3);
-            books.put("Filimona", 1);
-            books.put("İbranilərə", 13);
-            books.put("Yaqub", 5);
-            books.put("1 Butrus", 5);
-            books.put("2 Butrus", 3);
-            books.put("1 Yəhya", 5);
-            books.put("2 Yəhya", 1);
-            books.put("3 Yəhya", 1);
-            books.put("Yəhuda", 1);
-            books.put("Vəhy", 22);
-            break;
-        case 55:
-            books.put("Маттай", 28);
-            books.put("Марк", 16);
-            books.put("Лүк", 24);
-            books.put("Яхъя", 21);
-            books.put("Рәсүлләр", 28);
-            books.put("Римлыларга", 16);
-            books.put("1 Көринтлеләргә", 16);
-            books.put("2 Көринтлеләргә", 13);
-            books.put("Гәләтиялеләргә", 6);
-            books.put("Эфеслеләргә", 6);
-            books.put("Филипиялеләргә", 4);
-            books.put("Көләсәйлеләргә", 4);
-            books.put("1 Тисалуникәлеләргә", 5);
-            books.put("2 Тисалуникәлеләргә", 3);
-            books.put("1 Тимутигә", 6);
-            books.put("2 Тимутигә", 4);
-            books.put("Титуска", 3);
-            books.put("Филимунга", 1);
-            books.put("Еврейләргә", 13);
-            books.put("Ягъкуб", 5);
-            books.put("1 Петер", 5);
-            books.put("2 Петер", 3);
-            books.put("1 Яхъя", 5);
-            books.put("2 Яхъя", 1);
-            books.put("3 Яхъя", 1);
-            books.put("Яһүд", 1);
-            books.put("Ачылыш", 22);
-            break;
-            case 56:
-                books.put("மத்தேயு", 28);
-                books.put("மாற்கு", 16);
-                books.put("லூக்கா", 24);
-                books.put("யோவான்", 21);
-                books.put("அப்போஸ்தலர்", 28);
-                books.put("ரோமர்", 16);
-                books.put("1 கொரிந்தியர்", 16);
-                books.put("2 கொரிந்தியர்", 13);
-                books.put("கலாத்தியர்", 6);
-                books.put("எபேசியர்", 6);
-                books.put("பிலிப்பியர்", 4);
-                books.put("கொலோசெயர்", 4);
-                books.put("1 தெசலோனிக்கேயர்", 5);
-                books.put("2 தெசலோனிக்கேயர்", 3);
-                books.put("1 தீமோத்தேயு", 6);
-                books.put("2 தீமோத்தேயு", 4);
-                books.put("தீத்து", 3);
-                books.put("பிலேமோன்", 1);
-                books.put("எபிரெயர்", 13);
-                books.put("யாக்கோபு", 5);
-                books.put("1 பேதுரு", 5);
-                books.put("2 பேதுரு", 3);
-                books.put("1 யோவான்", 5);
-                books.put("2 யோவான்", 1);
-                books.put("3 யோவான்", 1);
-                books.put("யூதா", 1);
-                books.put("வெளிப்படுத்துதல்", 22);
-                break;
-            case 57:
-                books.put("1 Mose", 50);
-                books.put("2 Mose", 40);
-                books.put("3 Mose", 27);
-                books.put("4 Mose", 36);
-                books.put("5 Mose", 34);
-                books.put("Yosua", 24);
-                books.put("Ʋɔnudrɔ̃lawo", 21);
-                books.put("Rut", 4);
-                books.put("1 Samuel", 31);
-                books.put("2 Samuel", 24);
-                books.put("1 Fiawo", 22);
-                books.put("2 Fiawo", 25);
-                books.put("1 Kronika", 29);
-                books.put("2 Kronika", 36);
-                books.put("Ezra", 10);
-                books.put("Nehemiya", 13);
-                books.put("Esta", 10);
-                books.put("Hiob", 42);
-                books.put("Psalmowo", 150);
-                books.put("Lododowo", 31);
-                books.put("Nyagblɔla", 12);
-                books.put("Hawo Ƒe Ha", 8);
-                books.put("Yesaya", 66);
-                books.put("Yeremiya", 52);
-                books.put("Konyifahawo", 5);
-                books.put("Ezekiel", 48);
-                books.put("Daniel", 12);
-                books.put("Hosea", 14);
-                books.put("Yoel", 3);
-                books.put("Amos", 9);
-                books.put("Obadiya", 1);
-                books.put("Yona", 4);
-                books.put("Mika", 7);
-                books.put("Nahum", 3);
-                books.put("Habakuk", 3);
-                books.put("Zefaniya", 3);
-                books.put("Hagai", 2);
-                books.put("Zakariya", 14);
-                books.put("Malaki", 4);
-                books.put("Mateo", 28);
-                books.put("Marko", 16);
-                books.put("Luka", 24);
-                books.put("Yohanes", 21);
-                books.put("Dɔwɔwɔwo", 28);
-                books.put("Romatɔwo", 16);
-                books.put("1 Korintotɔwo", 16);
-                books.put("2 Korintotɔwo", 13);
-                books.put("Galatiatɔwo", 6);
-                books.put("Efesotɔwo", 6);
-                books.put("Filipitɔwo", 4);
-                books.put("Kolosetɔwo", 4);
-                books.put("1 Tesalonikatɔwo", 5);
-                books.put("2 Tesalonikatɔwo", 3);
-                books.put("1 Timoteo", 6);
-                books.put("2 Timoteo", 4);
-                books.put("Tito", 3);
-                books.put("Filemon", 1);
-                books.put("Hebritɔwo", 13);
-                books.put("Yakobo", 5);
-                books.put("1 Petro", 5);
-                books.put("2 Petro", 3);
-                books.put("1 Yohanes", 5);
-                books.put("2 Yohanes", 1);
-                books.put("3 Yohanes", 1);
-                books.put("Yuda", 1);
-                books.put("Nyaɖeɖefia", 22);
-                break;
-            case 58:
-                books.put("ปฐมกาล", 50);
-                books.put("อพยพ", 40);
-                books.put("เลวีนิติ", 27);
-                books.put("กันดารวิถี", 36);
-                books.put("เฉลยธรรมบัญญัติ", 34);
-                books.put("โยชูวา", 24);
-                books.put("ผู้วินิจฉัย", 21);
-                books.put("นางรูธ", 4);
-                books.put("1 ซามูเอล", 31);
-                books.put("2 ซามูเอล", 24);
-                books.put("1 พงศ์กษัตริย์", 22);
-                books.put("2 พงศ์กษัตริย์", 25);
-                books.put("1 พงศาวดาร", 29);
-                books.put("2 พงศาวดาร", 36);
-                books.put("เอสรา", 10);
-                books.put("เนหะมีย์", 13);
-                books.put("เอสเธอร์", 10);
-                books.put("โยบ", 42);
-                books.put("สดุดี", 150);
-                books.put("สุภาษิต", 31);
-                books.put("ปัญญาจารย์", 12);
-                books.put("เพลงโซโลมอน", 8);
-                books.put("อิสยาห์", 66);
-                books.put("เยเรมีย์", 52);
-                books.put("เพลงคร่ำครวญ", 5);
-                books.put("เอเสเคียล", 48);
-                books.put("ดาเนียล", 12);
-                books.put("โฮเชยา", 14);
-                books.put("โยเอล", 3);
-                books.put("อาโมส", 9);
-                books.put("โอบาดีห์", 1);
-                books.put("โยนาห์", 4);
-                books.put("มีคาห์", 7);
-                books.put("นาฮูม", 3);
-                books.put("ฮาบากุก", 3);
-                books.put("เศฟันยาห์", 3);
-                books.put("ฮักกัย", 2);
-                books.put("เศคาริยาห์", 14);
-                books.put("มาลาคี", 4);
-                books.put("มัทธิว", 28);
-                books.put("มาระโก", 16);
-                books.put("ลูกา", 24);
-                books.put("ยอห์น", 21);
-                books.put("กิจการ", 28);
-                books.put("โรม", 16);
-                books.put("1 โครินธ์", 16);
-                books.put("2 โครินธ์", 13);
-                books.put("กาลาเทีย", 6);
-                books.put("เอเฟซัส", 6);
-                books.put("ฟีลิปปี", 4);
-                books.put("โคโลสี", 4);
-                books.put("1 เธสะโลนิกา", 5);
-                books.put("2 เธสะโลนิกา", 3);
-                books.put("1 ทิโมธี", 6);
-                books.put("2 ทิโมธี", 4);
-                books.put("ทิตัส", 3);
-                books.put("ฟีเลโมน", 1);
-                books.put("ฮีบรู", 13);
-                books.put("ยากอบ", 5);
-                books.put("1 เปโตร", 5);
-                books.put("2 เปโตร", 3);
-                books.put("1 ยอห์น", 5);
-                books.put("2 ยอห์น", 1);
-                books.put("3 ยอห์น", 1);
-                books.put("ยูดา", 1);
-                books.put("วิวรณ์", 22);
-            break;
+        Gson gson = new Gson();
+        String json = "";
+//        FullBibleActivity.settings.getString("LANG_" + lang, "");
+        LinkedHashMap<String,Integer> fullbook = gson.fromJson(json,new TypeToken<LinkedHashMap<String, Integer>>() {
+        }.getType());
+        books = new LinkedHashMap();
+        epubBooks = new LinkedHashMap();
+        for(String key : fullbook.keySet()) {
+            if (key.contains("|")){
+                String[] sp = key.split("\\|");
+                books.put(sp[0],fullbook.get(key));
+                epubBooks.put(sp[0],sp[1]);
+            }
+            else {
+                books.put(key,fullbook.get(key));
+            }
         }
-
+        //books = gson.fromJson(json, new TypeToken<LinkedHashMap<String, Integer>>() {
+//        }.getType());
         currentLang = lang;
     }
 
-    public static String handleSendText(String sharedText) {
-        if (sharedText != null) {
+
+    public static boolean isEpubMode(int selectedLang, int versionNumber){
+//        return !(new File(Environment.getExternalStorageDirectory()
+//                + "/FloatingBible/lang_" + selectedLang + "_"
+//                + versionNumber + "/bible/b17c10.html").isFile() || new File(Environment.getExternalStorageDirectory()
+//                + "/FloatingBible/lang_" + selectedLang + "_"
+//                + versionNumber + "/bible/b27c22.html").isFile());
+        return true;
+    }
+
+    public List<Reference> getReferences(String refText) {
+        List<Reference> results = new ArrayList();
+
+        Matcher matcher;
+
+        matcher = pattern.matcher(refText);
+
+        while (matcher.find()) {
+
+            if (isBibleReference(matcher.group())) {
+                Reference ref = getReference(matcher.group());
+                if (ref != null) {
+                    results.add(ref);
+                    if (matcher.group().contains(";")) {
+                        String[] parts = matcher.group().split(";");
+                        for (int i = 1; i < parts.length; i++) {
+                            parts[i] = ref.book + " " + parts[i];
+                            Reference newreference = getReference(parts[i]);
+                            if (newreference != null) {
+                                results.add(newreference);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return results;
+    }
+
+    public Reference getReference(String refText) {
+        if (refText != null) {
             String prefix = "", book = "";
             int chapter = 1, verse;
             List<Integer> verses = new ArrayList();
-            String refString = cleanAndTransform(sharedText);
-            String patString = "(\\d{0,1}\\.?)\\W*([\\D]{2,})\\W*(\\d{1,3})(?:\\D+(\\d{1,3})){0,1}((?:(?:,\\s?|-)\\d{1,3})*){0,1}";
-            Pattern p = Pattern.compile(patString);
-            Matcher m = p.matcher(refString);
+
+            Matcher m = pattern.matcher(refText);
             if (m.find()) {
                 int count = m.groupCount();
                 if (count > 0) {
@@ -3880,39 +383,143 @@ public class UtilsBible {
                     }
                 }
             }
-            book = UtilsBible.getBook(prefix + book);
-            return openFileAndFind(book, chapter, verses);
+            //book = UtilsBible.getBook(prefix + book);
+            if (book.length() > 1) {
+                book = getBook(prefix + book);
+                if (book.length() > 0 && chapter > 0 && verses.size() > 0) {
+                    System.out.println("GETBOOK " + refText + " --> OK");
+                    return new Reference(this.currentLang, book, chapter, verses);
+                } else {
+                    System.out.println("GETBOOK " + refText + " --> Not OK");
+                }
+            } else {
+                System.out.println("GETBOOK " + refText + " --> Not found");
+            }
+
 
         }
         return null;
     }
 
-    private static String openFileAndFind(String book, int chap,
-            List<Integer> verses) {
-        String html = getStringForBookAndChap(book, chap);
-        Document doc = Jsoup.parse(html);
-        String finalText = "";
-        for (Integer i : verses) {
-            String id = "v" + (UtilsBible.getBookNum(book) + 1)
-                    + String.format("%03d", chap) + String.format("%03d", i);
-            Element content = doc.getElementById(id);
-            if (content != null) {
-                finalText += content.text().replaceAll("\\+", "")
-                        .replaceAll("  ", " ");
-            }
-
+    public String handleSendText(String sharedText, int versionNum) {
+        boolean multiple = false;
+        if (sharedText.contains(";")) {
+            multiple = true;
         }
-        if (finalText.length() > 0) {
-            return finalText;
+        Reference reference = getReference(sharedText);
+        if (reference != null) {
+            String returnString = openFileAndFind(reference, versionNum);
+            if (multiple) {
+                String[] parts = sharedText.split(";");
+                for (int i = 1; i < parts.length; i++) {
+                    parts[i] = reference.book + " " + parts[i];
+                    Reference newreference = getReference(parts[i]);
+                    if (newreference != null) {
+                        returnString += " " + newreference.toString() + " " + openFileAndFind(newreference, versionNum);
+                    }
+                }
+            }
+            return returnString;
         }
         return "";
     }
 
-    private static String getStringForBookAndChap(String book, int chap) {
+    public List<String[]> handleSendTextMultiple(String sharedText, int versionNum) {
+        List<String[]> results = new ArrayList();
 
-        String file = "bible/" + UtilsBible.normalizeBook(book) + "_" + chap
-                + "_.html";
-        File html = new File(file);
+        List<Reference> references = getReferences(sharedText);
+        for (Reference ref : references) {
+            String text = openFileAndFind(ref, versionNum);
+            if (text != null && !text.startsWith("Error")) {
+                String[] verse = {ref.verseId, text};
+                results.add(verse);
+            }
+        }
+
+        return results;
+    }
+
+    public String openFileAndFind(Reference reference, int versionNum) {
+        String html = getStringForBookAndChap(reference, versionNum);
+        if (html.startsWith("Error")) {
+            return html;
+        }
+        Document doc = Jsoup.parse(html);
+        String finalText = "";
+        for (Integer i : reference.verses) {
+            int book = getBookNum(reference.book) + 1;
+            if (getBooks().size() < 66) {
+                book += 39;
+            }
+            String id = "v" + (book)
+                    + String.format("%03d", reference.chapter) + String.format("%03d", i);
+            Element content = doc.getElementById(id);
+            if (content != null) {
+                if (finalText.length() > 0) {
+                    finalText += " ";
+                }
+                finalText += content.text().replaceAll("\\+", "")
+                        .replaceAll(" ", " ");
+
+            }
+        }
+        finalText = finalText.replaceAll("(.*?)(\\D)(\\d)(.*?)", "$1$2 $3$4");
+        if (finalText.length() > 0) {
+            return finalText;
+        }
+        return "Error can't extract verses from file.";
+    }
+
+    public int getVerseNumber(String html) {
+        Document doc = Jsoup.parse(html);
+        Elements content = doc.getElementsByAttributeValue("class", "verse");
+        if (content != null) {
+            return content.size();
+        }
+        return -1;
+    }
+
+    public int getVerseNumberFromReference(Reference reference) {
+        String html = getStringForBookAndChap(reference, 400);
+        Document doc = Jsoup.parse(html);
+        Elements content = doc.getElementsByAttributeValue("class", "verse");
+        if (content != null) {
+            return content.size();
+        }
+        return -1;
+    }
+
+    public String getStringForBookAndChap(Reference reference, int versionNum) {
+
+        if (isEpubMode(currentLang,versionNum)) {
+            String file = getBibleFileName(currentLang).replace(".epub", "")
+                    + "/OEBPS/" + getFileForReference(true, reference);
+            String html = getStringForFile(new File(file));
+
+            html = html.replaceAll("<span id=\"(chapter\\d+_verse\\d+)\"></span>", "</span><span id=\"$1\">");
+            html = html.replaceAll("<a id=\"(chapter\\d+_verse\\d+)\"></a>", "</span><span id=\"$1\">");
+
+            html = html.replaceAll("chapter(\\d{3})_", "v" + (getBookNum(reference.book) + 1) + "$1_");
+            html = html.replaceAll("chapter(\\d{2})_", "v" + (getBookNum(reference.book) + 1) + "0$1_");
+            html = html.replaceAll("chapter(\\d)_", "v" + (getBookNum(reference.book) + 1) + "00$1_");
+            html = html.replaceAll("_verse(\\d{3})", "$1");
+            html = html.replaceAll("_verse(\\d{2})", "0$1");
+            html = html.replaceAll("_verse(\\d{1})", "00$1");
+            html = html.replaceAll("<span id=\"v", "<span class=\"verse\" id=\"v");
+            return html;
+        }
+        else {
+            String file = "lang_" + currentLang + "_" + versionNum
+                    + "/bible/" + getFileForReference(false,reference);
+            String html = getStringForFile(new File(file));
+            return html;
+        }
+
+    }
+
+    public String getStringForFile(File html) {
+        Date start = new Date();
+//        System.out.println("GETBOOK " + "getStringForFile : " + start);
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(
                     new FileInputStream(html)));
@@ -3921,27 +528,419 @@ public class UtilsBible {
             while ((inputLine = in.readLine()) != null)
                 y = y.concat(inputLine);
             in.close();
+//            Log.d("TIMERS", "getStringForFile end :" + (new Date().getTime() - start.getTime()) + "ms");
+
+
+
             return y;
         } catch (IOException e) {
-
+            System.out.println("getStringForFile " + e.getMessage());
+            return "Error " + e.getMessage();
         }
-        return "";
 
     }
 
-    private static String cleanAndTransform(String sharedText) {
-        String text = sharedText.replaceAll("[^\\w0-9À-ú:,\\- ;]", "");
-        // .toLowerCase();
-
-        Pattern p = Pattern.compile("([1-3]) (\\w)");
-        Matcher m = p.matcher(text);
-        StringBuffer sb = new StringBuffer();
-        while (m.find()) {
-            m.appendReplacement(sb, "$1-$2");
-        }
-        m.appendTail(sb);
-        return sb.toString();// Utils.normalizeBook(sb.toString()).replaceAll("-",
-        // " ");
+    public String getFileForReference(Reference reference) {
+        return getFileForReference(isEpubMode(currentLang,400),reference);
     }
 
+    public String getFileForReference(boolean epubMode, Reference reference) {
+        if (epubMode)
+        {
+            String bookHtml = epubBooks.get(reference.book);
+            if (reference.chapter > 1) {
+                bookHtml += "-split" + (reference.chapter);
+            }
+            bookHtml += ".xhtml";
+            return bookHtml;
+        }
+        else {
+            if (currentLang < 7) {
+                return UtilsBible.normalizeBook(reference.book) + "_" + reference.chapter
+                        + "_.html";
+            } else {
+                return "b" + (getBookNum(reference.book) + 1) + "c" + reference.chapter + ".html";
+            }
+        }
+    }
+
+    public boolean isBibleReference(String ref) {
+        return getReference(ref) != null;
+    }
+
+
+//    public static int getIndexOfLangId(int id) {
+//        String[] langs = getLangArray();
+//
+//        ArrayList<Lang> langArray = getLangs(context);
+//
+//        for (int i = 0; i < langs.length; i++) {
+//            if (getLangIdFromString(context, langs[i]) == id) {
+//                return i;
+//            }
+//        }
+//        return -1;
+//    }
+//
+//    public static int getIdOfLangIndex(Context context, int index) {
+//        String[] langs = getLangArray(context);
+//
+//        return getLangIdFromString(context, langs[index]);
+//
+//    }
+//
+//    public static List<String> filterAvailableLanguages(Context context) {
+//        int versionNumber = context.getResources().getInteger(R.integer.data_version);
+//
+//        ArrayList<Lang> langArray = getLangs(context);
+//        List<String> availableLangs = new ArrayList<>();
+//        for (Lang lang : langArray) {
+//            if (checkInstallation(lang.getId(), isEpubMode(lang.getId(),versionNumber),versionNumber)) {
+//                availableLangs.add(lang.getText());
+//            }
+//        }
+//        return availableLangs;
+//    }
+
+//    public static int getCurrentSelectedPosition(Context context, int currentLangId) {
+//        int versionNumber = context.getResources().getInteger(R.integer.data_version);
+//        SharedPreferences settings = context.getSharedPreferences(FullBibleActivity.PREFS_FLOATINGBIBLE, 0);
+//
+//        ArrayList<Lang> langArray;
+//        Gson gson = new Gson();
+//        String json = settings.getString("LANGS", "");
+//        langArray = gson.fromJson(json, new TypeToken<ArrayList<Lang>>() {
+//        }.getType());
+//
+//        List<String> availableLangs = new ArrayList<>();
+//        for (int i = 0; i < langArray.size(); i++) {
+//            if (checkInstallation(langArray.get(i).getId(),isEpubMode(langArray.get(i).getId(),versionNumber), versionNumber)) {
+//                availableLangs.add(langArray.get(i).getText());
+//                if (langArray.get(i).getId() == currentLangId) {
+//                    return availableLangs.size() - 1;
+//                }
+//            }
+//        }
+//        return 0;
+//    }
+
+//    public static ArrayList<Lang> getLangs(Context context) {
+//        SharedPreferences settings = context.getSharedPreferences(FullBibleActivity.PREFS_FLOATINGBIBLE, 0);
+//
+//        ArrayList<Lang> langArray;
+//        Gson gson = new Gson();
+//        String json = settings.getString("LANGS", "");
+//        return gson.fromJson(json, new TypeToken<ArrayList<Lang>>() {
+//        }.getType());
+//    }
+//
+//    public static int getLangIdFromString(Context context, String text) {
+//        ArrayList<Lang> langArray = getLangs(context);
+//        for (Lang lang : langArray) {
+//            if (lang.getText().equals(text)) {
+//                return lang.getId();
+//            }
+//        }
+//        return 1;
+//    }
+//
+//    public static String getLangStringFromId(Context context, int id) {
+//        ArrayList<Lang> langArray = getLangs(context);
+//        for (Lang lang : langArray) {
+//            if (lang.getId() == id) {
+//                return lang.getText();
+//            }
+//        }
+//        return "";
+//    }
+//
+//    public static Lang getLangFromId(Context context, int id) {
+//        ArrayList<Lang> langArray = getLangs(context);
+//        for (Lang lang : langArray) {
+//            if (lang.getId() == id) {
+//                return lang;
+//            }
+//        }
+//        return null;
+//    }
+//
+//    public static String[] getLangArray(Context context) {
+//        ArrayList<Lang> langArray = getLangs(context);
+//        String[] result = new String[langArray.size()];
+//        Collections.sort(langArray, new Comparator<Lang>() {
+//            @Override
+//            public int compare(Lang lhs, Lang rhs) {
+//                return lhs.getText().compareTo(rhs.getText());
+//            }
+//        });
+//        for (int i = 0; i < langArray.size(); i++) {
+//            result[i] = langArray.get(i).getText();
+//        }
+//        return result;
+//    }
+
+//    public String getAudioUrl(Context context, String selectedBook, int selectedChap) {
+//        if (audioList == null || audioList.isEmpty()) {
+//            audioList = new HashMap<>();
+//            SharedPreferences settings = context.getSharedPreferences(
+//                    FullBibleActivity.PREFS_FLOATINGBIBLE, 0);
+//            final String letter = getJWLangFromInt(currentLang);
+//            String audioListStr = settings.getString("AUDIO_LIST_" + letter, null);
+//            if (audioListStr == null) {
+//                Log.d("AUDIO", "getAudioUrl str : null");
+//                return null;
+//            }
+//            String[] lines = audioListStr.split("\\n");
+//            if (lines != null && lines.length > 0) {
+//                for (int i = 0; i < lines.length; i++) {
+//                    String[] row = lines[i].split("\\|");
+//                    if (row[0].equals(getJWLangFromInt(currentLang))) {
+//                        if (audioList.get(Integer.parseInt(row[1])) == null) {
+//                            audioList.put(Integer.parseInt(row[1]), new HashMap<Integer, String>());
+//                        }
+//                        audioList.get(Integer.parseInt(row[1])).put(Integer.parseInt(row[2]), row[3]);
+//                    }
+//                }
+//            }
+//        }
+//        if (audioList != null && audioList.get(getBookNum(selectedBook) + 1) != null) {
+//            Log.d("AUDIO", "getAudioUrl : " + audioList.get(getBookNum(selectedBook) + 1).get(selectedChap + 1));
+//            return audioList.get(getBookNum(selectedBook) + 1).get(selectedChap + 1);
+//        }
+//        Log.d("AUDIO", "getAudioUrl : null");
+//        return null;
+//    }
+
+    public static String getJWLangFromInt(int lang) {
+        switch (lang) {
+            case 1:
+                return "F";
+            case 2:
+                return "E";
+            case 3:
+                return "S";
+            case 4:
+                return "X";
+            case 5:
+                return "T";
+            case 6:
+                return "I";
+            case 7:
+                return "G";
+            case 8:
+                return "TG";
+            case 9:
+                return "M";
+            case 10:
+                return "H";
+            case 11:
+                return "K";
+            case 12:
+                return "U";
+            case 13:
+                return "CHS";
+            case 14:
+                return "SV";
+            case 15:
+                return "KO";
+            case 16:
+                return "P";
+            case 17:
+                return "V";
+            case 18:
+                return "CR";
+            case 19:
+                return "CV";
+            case 20:
+                return "SB";
+            case 21:
+                return "BL";
+            case 22:
+                return "J";
+            case 23:
+                return "B";
+            case 24:
+                return "A";
+            case 25:
+                return "REA";
+            case 26:
+                return "T";
+            case 27:
+                return "AL";
+            case 28:
+                return "O";
+            case 29:
+                return "IN";
+            case 30:
+                return "N";
+            case 31:
+                return "Z";
+            case 32:
+                return "VT";
+            case 33:
+                return "TK";
+            case 34:
+                return "CB";
+            case 35:
+                return "AZ";
+            case 36:
+                return "AF";
+            case 37:
+                return "ST";
+            case 38:
+                return "LI";
+            case 39:
+                return "MG";
+            case 40:
+                return "AM";
+            case 41:
+                return "CHM-CHS";
+            case 42:
+                return "C";
+            case 43:
+                return "KZ";
+            case 44:
+                return "IL";
+            case 45:
+                return "AN";
+            case 46:
+                return "CH";
+            case 47:
+                return "HI";
+            case 48:
+                return "TW";
+            case 49:
+                return "YR";
+            case 50:
+                return "D";
+            case 51:
+                return "SW";
+            default:
+                return "-1";
+        }
+    }
+//    public boolean isAudioAvailable(final Context context) {
+//
+//        final String letter = getJWLangFromInt(currentLang);
+//        if (!((FullBibleActivity) context).isOnline()) {
+//            Toast.makeText(context, R.string.audio_need_internet_connection, Toast.LENGTH_SHORT).show();
+//            return false;
+//        }
+//
+//        if (audioList != null) {
+//            String[] lines = audioList.split("\\n");
+//            if (lines != null && lines.length > 0) {
+//                for (int i = 0; i < lines.length; i++) {
+//                    String[] row = lines[i].split("\\|");
+//                    if (row[0].equals(getJWLangFromInt(currentLang))) {
+//                        Log.d("AUDIO", "isAudioAvailable : true");
+//                        return true;
+//                    }
+//                }
+//            }
+//        }
+//        Toast.makeText(context, R.string.no_audio_files, Toast.LENGTH_SHORT).show();
+//        Log.d("AUDIO", "isAudioAvailable : false");
+//        return false;
+//
+//    }
+//    public boolean isAudioAvailable(final Context context) {
+//        final SharedPreferences settings = context.getSharedPreferences(
+//                FullBibleActivity.PREFS_FLOATINGBIBLE, 0);
+//        final String letter = getJWLangFromInt(currentLang);
+//        String audioList = settings.getString("AUDIO_LIST_" + letter, null);
+//        if (!((FullBibleActivity) context).isOnline()) {
+//            Toast.makeText(context, R.string.audio_need_internet_connection, Toast.LENGTH_SHORT).show();
+//            return false;
+//        }
+//        long date = settings.getLong("LAST_AUDIO_LIST_CHECK_" + letter, 0);
+//        long period;
+//        if (audioList != null) {
+//            period = (7 * 24 * 3600 * 1000);
+//        } else {
+//            period = (1 * 24 * 3600 * 1000);
+//        }
+//        if (new Date().getTime() - date > period) {
+//            new AudioListDownloader() {
+//                @Override
+//                protected void onPostExecute(String s) {
+//                    if (s == null) {
+//                        Log.d("AUDIO", "second try download");
+//                        new AudioListDownloader() {
+//                            @Override
+//                            protected void onPostExecute(String s) {
+//                                settings.edit().putLong("LAST_AUDIO_LIST_CHECK_" + letter, new Date().getTime()).apply();
+//                                settings.edit().putString("AUDIO_LIST_" + letter, s).commit();
+//                                ((FullBibleActivity) context).createAudioPlayer();
+//                            }
+//                        }.execute(letter);
+//                    } else {
+//                        settings.edit().putLong("LAST_AUDIO_LIST_CHECK_" + letter, new Date().getTime()).apply();
+//                        settings.edit().putString("AUDIO_LIST_" + letter, s).commit();
+//                        ((FullBibleActivity) context).createAudioPlayer();
+//                    }
+//
+//                }
+//            }.execute(letter);
+////            Log.d("AUDIO", "isAudioAvailable : " + (audioList != null && audioList.length() > 0));
+////            return audioList != null && audioList.length() > 0;
+//        }
+//        if (audioList != null) {
+//            String[] lines = audioList.split("\\n");
+//            if (lines != null && lines.length > 0) {
+//                for (int i = 0; i < lines.length; i++) {
+//                    String[] row = lines[i].split("\\|");
+//                    if (row[0].equals(getJWLangFromInt(currentLang))) {
+//                        Log.d("AUDIO", "isAudioAvailable : true");
+//                        return true;
+//                    }
+//                }
+//            }
+//        }
+//        Toast.makeText(context, R.string.no_audio_files, Toast.LENGTH_SHORT).show();
+//        Log.d("AUDIO", "isAudioAvailable : false");
+//        return false;
+//
+//    }
+
+    public static String getBibleFileName(String code) {
+        if (UtilsBible.isNewNwt(code)){
+            return bibleFileNameNew.replace("%1", code);
+        }
+        else {
+            return bibleFileName.replace("%1", code);
+        }
+
+    }
+    public static String getBibleFileName(int selectedLang) {
+        return getBibleFileName(getJWLangFromInt(selectedLang));
+
+    }
+
+//    public void processBibleEpub(int selectedLang, String epubfile) {
+//        try {
+//            new Decompress(new File(Environment.getExternalStorageDirectory(),
+//                    "FloatingBible/"+epubfile).getCanonicalPath(),
+//                    new File(Environment.getExternalStorageDirectory(),
+//                            "FloatingBible").getAbsolutePath() + "/" + epubfile.replace(".epub", ""))
+//                    .unzip();
+//            new File(Environment.getExternalStorageDirectory(),
+//                    "FloatingBible/"+epubfile).delete();
+//        } catch (IOException e) {
+//
+//        }
+//    }
+
+    public String getBibleUrl(String code) {
+        if (UtilsBible.isNewNwt(code)){
+            return bibleUrlNew.replace("%1", code);
+        }
+        else {
+            return bibleUrl.replace("%1", code);
+        }
+    }
+
+    public static boolean isNewNwt(String code){
+        return ("E".equals(code) || "KO".equals(code) || "K".equals(code)) || "CR".equals(code) || "T".equals(code)|| "AZ".equals(code)|| "ST".equals(code)|| "AM".equals(code);
+    }
 }
