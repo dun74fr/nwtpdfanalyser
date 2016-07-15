@@ -28,6 +28,16 @@ public class PDFTextAnnotator extends PDFTextStripper {
 	// private float heightModifier = (float) 2.250;
 	private float heightModifier = (float) 1;
 	private int currentLang = 1;
+	private float opacity = 0.8f;
+
+	public float getOpacity() {
+		return opacity;
+	}
+
+	public void setOpacity(float opacity) {
+		this.opacity = opacity;
+	}
+
 	private class Match {
 		public final String str;
 		public final List<TextPosition> positions;
@@ -228,15 +238,13 @@ public class PDFTextAnnotator extends PDFTextStripper {
 	 * list of added annotations for further modification Note: it will process
 	 * every page, but cannot process patterns that span multiple pages Note: it
 	 * will not work for top-bottom text (such as Chinese)
-	 * 
-	 * @param pdf
-	 *            PDDocument
-	 * @param pattern
-	 *            Pattern (regex)
+	 *
+	 * @param pdf     PDDocument
+	 * @param pattern Pattern (regex)
 	 * @throws Exception
 	 */
 	public List<PDAnnotationTextMarkup> highlight(PDDocument pdf,
-			Pattern pattern) throws Exception {
+												  Pattern pattern) throws Exception {
 		if (textCache == null) {
 			throw new Exception(
 					"TextCache was not initilized, please run initialize on the document first");
@@ -276,10 +284,10 @@ public class PDFTextAnnotator extends PDFTextStripper {
 
 					markup.setQuadPoints(quads);
 
-					markup.setConstantOpacity((float) 0.8);
+					markup.setConstantOpacity(getOpacity());
 					markup.setColor(getDefaultColor());
 					markup.setPrinted(true);
-					String content = bible.handleSendText(match.str,400);
+					String content = bible.handleSendText(match.str, 400);
 					if (content != null && content.length() > 0) {
 						markup.setContents(content);
 						markup.setRichContents(content);

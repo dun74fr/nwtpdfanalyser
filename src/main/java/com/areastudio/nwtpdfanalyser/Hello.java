@@ -1,10 +1,7 @@
 package com.areastudio.nwtpdfanalyser;
 
-import org.apache.pdfbox.io.RandomAccessBuffer;
 import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
-import org.apache.pdfbox.io.RandomAccessFile;
 import org.apache.pdfbox.pdfparser.PDFParser;
-import org.apache.pdfbox.pdfparser.PDFStreamParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
@@ -16,7 +13,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -74,7 +70,9 @@ public final class Hello extends HttpServlet {
         int color = Integer.parseInt(request.getParameter("color"));
 
         pdfAnnotator.setDefaultColor(new PDColor(new float[] { red(color) / 100, green(color) / 100, blue(color)/100 },PDDeviceRGB.INSTANCE));
-
+        if (color == -1){
+            pdfAnnotator.setOpacity(0f);
+        }
 
         // new
         // annotator
