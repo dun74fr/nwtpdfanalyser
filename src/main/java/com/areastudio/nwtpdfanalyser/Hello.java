@@ -13,11 +13,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 
 @MultipartConfig
 public final class Hello extends HttpServlet {
+    public static String LANG_JSON;
     @Override
     public void doGet(HttpServletRequest request,
                       HttpServletResponse response)
@@ -41,8 +43,13 @@ public final class Hello extends HttpServlet {
 //        writer.println(fileName);
 
         PDDocument pdDoc = null;
-        UtilsBible.getBooks(2);
+//        UtilsBible.getBooks(2);
+        try {
+            LANG_JSON = LanguageXml.importFile(new FileInputStream("langs.xml"), Integer.parseInt(request.getParameter("lang_id")));
+        }
+        catch (Exception e) {
 
+        }
 
         PDFParser parser = new PDFParser(new RandomAccessBufferedFileInputStream(filePart.getInputStream()));
 

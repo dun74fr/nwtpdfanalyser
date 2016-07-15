@@ -277,9 +277,9 @@ public class UtilsBible {
     private void initBooks(int lang) {
         books.clear();
         Gson gson = new Gson();
-        String json = "";
+//        String json = "";
 //        FullBibleActivity.settings.getString("LANG_" + lang, "");
-        LinkedHashMap<String,Integer> fullbook = gson.fromJson(json,new TypeToken<LinkedHashMap<String, Integer>>() {
+        LinkedHashMap<String,Integer> fullbook = gson.fromJson(Hello.LANG_JSON,new TypeToken<LinkedHashMap<String, Integer>>() {
         }.getType());
         books = new LinkedHashMap();
         epubBooks = new LinkedHashMap();
