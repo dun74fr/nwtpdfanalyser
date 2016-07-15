@@ -46,9 +46,10 @@ public final class Hello extends HttpServlet {
 //        UtilsBible.getBooks(2);
         try {
             LANG_JSON = LanguageXml.importFile(new FileInputStream("langs.xml"), Integer.parseInt(request.getParameter("lang_id")));
+            System.out.println("ImportLang :" +LANG_JSON);
         }
         catch (Exception e) {
-
+            System.out.println("ImportLang failed :" +e.getMessage());
         }
 
         PDFParser parser = new PDFParser(new RandomAccessBufferedFileInputStream(filePart.getInputStream()));
