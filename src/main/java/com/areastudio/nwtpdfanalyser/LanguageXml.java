@@ -34,7 +34,7 @@ public class LanguageXml {
             for (int i = 0; i < langs.getLength(); i++) {
                 Node langNode = langs.item(i);
 
-                if (Integer.parseInt(langNode.getAttributes().getNamedItem("id").getNodeValue()) == lang_id);
+                if (Integer.parseInt(langNode.getAttributes().getNamedItem("id").getNodeValue()) == lang_id)
                 {
                     System.out.println("Lang id :" + Integer.parseInt(langNode.getAttributes().getNamedItem("id").getNodeValue()) + " - lang_id =" + lang_id);
                     Lang lang = new Lang();
