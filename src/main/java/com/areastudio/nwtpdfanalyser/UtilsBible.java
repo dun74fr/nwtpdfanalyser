@@ -546,6 +546,9 @@ public class UtilsBible {
         } catch (IOException e) {
             System.out.println("getStringForFile " + e.getMessage());
             return "Error " + e.getMessage();
+        }catch (NullPointerException e) {
+            System.out.println("getStringForFile " + e.getMessage());
+            return "Error " + e.getMessage();
         }
 
     }

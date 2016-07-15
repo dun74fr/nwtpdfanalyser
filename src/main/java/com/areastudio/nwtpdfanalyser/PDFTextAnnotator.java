@@ -290,7 +290,7 @@ public class PDFTextAnnotator extends PDFTextStripper {
 					markup.setColor(getDefaultColor());
 					markup.setPrinted(true);
 					String content = bible.handleSendText(match.str, 400);
-					if (content != null && content.length() > 0) {
+					if (content != null && content.length() > 0 && !content.startsWith("Error")) {
 						markup.setContents(content);
 						markup.setRichContents(content);
 						annotations.add(markup);
