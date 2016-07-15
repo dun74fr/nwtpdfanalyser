@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 
 public class UtilsBible {
 
-    private final ServletContext context;
+    private ServletContext context;
     private Map<String, Integer> books = new LinkedHashMap();
     private int currentLang;
     private final Pattern pattern = Pattern.compile("((?:\\d\\.?)?)\\s?([\\wÀ-ú]\\p{L}{1,})\\.?\\s*(\\d{1,3})(?::\\s?(\\d{1,3}))((?:(?:,\\s?|-\\s?)\\d{1,3})*)(?:\\s?;\\s?(\\d{1,3})(?::\\s?(\\d{1,3}))((?:(?:,\\s?|-\\s?)\\d{1,3})*))*");
@@ -29,6 +29,10 @@ public class UtilsBible {
     public static String bibleUrlNew = "http://www.jw.org/apps/TRGCHlZRQVNYVrXF?output=json&pub=nwt&fileformat=EPUB&alllangs=0&langwritten=%1";
     private Map<String, String> epubBooks;
 
+    public UtilsBible(int lang) {
+        currentLang = lang;
+        initBooks(currentLang);
+    }
     public UtilsBible(int lang, ServletContext context) {
         this.context = context;
         currentLang = lang;

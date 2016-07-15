@@ -2,10 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c56c90e8-2320-40bd-a375-0645d763805e" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/Hello.java" afterPath="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/Hello.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/PDFTextAnnotator.java" afterPath="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/PDFTextAnnotator.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/UtilsBible.java" afterPath="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/UtilsBible.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/webapp/index.html" afterPath="$PROJECT_DIR$/src/main/webapp/index.html" />
     </list>
     <ignored path="nwtpdfanalyser.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -46,10 +43,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="PDFTextAnnotator.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="PDFTextAnnotator.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/PDFTextAnnotator.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.20512821">
+            <state vertical-scroll-proportion="-8.0">
               <caret line="175" column="52" selection-start-line="175" selection-start-column="52" selection-end-line="175" selection-end-column="52" />
               <folding>
                 <element signature="imports" expanded="true" />
@@ -67,6 +64,16 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="Reference.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/Reference.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="69" column="37" selection-start-line="69" selection-start-column="37" selection-end-line="69" selection-end-column="37" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="PDColor.class" pinned="false" current-in-tab="false">
         <entry file="jar://$MAVEN_REPOSITORY$/org/apache/pdfbox/pdfbox/2.0.0/pdfbox-2.0.0.jar!/org/apache/pdfbox/pdmodel/graphics/color/PDColor.class">
           <provider selected="true" editor-type-id="text-editor">
@@ -77,14 +84,14 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="UtilsBible.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="UtilsBible.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/UtilsBible.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-16.88889">
-              <caret line="530" column="29" selection-start-line="530" selection-start-column="29" selection-end-line="530" selection-end-column="29" />
+            <state vertical-scroll-proportion="0.14814815">
+              <caret line="18" column="11" selection-start-line="18" selection-start-column="11" selection-end-line="18" selection-end-column="11" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <marker date="1468610202000" expanded="true" signature="23798:25700" placeholder="..." />
+                <marker date="1468610621000" expanded="true" signature="23892:25794" placeholder="..." />
               </folding>
             </state>
           </provider>
@@ -163,9 +170,9 @@
         <option value="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/Lang.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/LanguageXml.java" />
         <option value="$PROJECT_DIR$/src/main/webapp/index.html" />
-        <option value="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/UtilsBible.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/Hello.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/PDFTextAnnotator.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/UtilsBible.java" />
       </list>
     </option>
   </component>
@@ -783,12 +790,12 @@
       <created>1468527634661</created>
       <option name="number" value="Default" />
       <updated>1468527634661</updated>
-      <workItem from="1468527641157" duration="17517000" />
+      <workItem from="1468527641157" duration="17644000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="17517000" />
+    <option name="totallyTimeSpent" value="17644000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="49" y="23" width="1871" height="1177" extended-state="6" />
@@ -867,16 +874,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/Reference.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-22.35849">
-          <caret line="79" column="27" selection-start-line="79" selection-start-column="27" selection-end-line="79" selection-end-column="27" />
-          <folding>
-            <element signature="imports" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/Lang.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -932,17 +929,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/UtilsBible.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-16.88889">
-          <caret line="530" column="29" selection-start-line="530" selection-start-column="29" selection-end-line="530" selection-end-column="29" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <marker date="1468610202000" expanded="true" signature="23798:25700" placeholder="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/Hello.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -961,7 +947,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/PDFTextAnnotator.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.20512821">
+        <state vertical-scroll-proportion="-8.0">
           <caret line="175" column="52" selection-start-line="175" selection-start-column="52" selection-end-line="175" selection-end-column="52" />
           <folding>
             <element signature="imports" expanded="true" />
@@ -974,6 +960,25 @@
             <element signature="e#8629#8653#0" expanded="true" />
             <element signature="e#10535#10536#0" expanded="true" />
             <element signature="e#10567#10568#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/Reference.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="69" column="37" selection-start-line="69" selection-start-column="37" selection-end-line="69" selection-end-column="37" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/areastudio/nwtpdfanalyser/UtilsBible.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.14814815">
+          <caret line="18" column="11" selection-start-line="18" selection-start-column="11" selection-end-line="18" selection-end-column="11" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <marker date="1468610621000" expanded="true" signature="23892:25794" placeholder="..." />
           </folding>
         </state>
       </provider>
