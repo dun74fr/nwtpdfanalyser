@@ -425,7 +425,7 @@ public class PDFTextAnnotator extends PDFTextStripper {
 		return quads;
 	}
 
-	public void getDefaultColor(PDColor color) {
+	public void setDefaultColor(PDColor color) {
 		this.defaultColor = color;
 	}
 
