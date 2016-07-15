@@ -7,6 +7,7 @@ import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServlet;
@@ -15,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 
 @MultipartConfig
@@ -27,6 +29,12 @@ public final class Hello extends HttpServlet {
         response.setContentType("text/plain");
         PrintWriter writer = response.getWriter();
         writer.println(request.getParameter("color"));
+    }
+
+    public InputStream getResource(String resourcePath) {
+        ServletContext servletContext = getServletContext();
+        InputStream openStream = servletContext.getResourceAsStream( resourcePath );
+        return openStream;
     }
 
     @Override
@@ -45,8 +53,8 @@ public final class Hello extends HttpServlet {
         PDDocument pdDoc = null;
 //        UtilsBible.getBooks(2);
         try {
-            System.out.println("RealPath : " +getServletContext().getRealPath("/langs.xml"));
-            LANG_JSON = LanguageXml.importFile(new FileInputStream(getServletContext().getRealPath("/langs.xml")), Integer.parseInt(request.getParameter("lang_id")));
+//            System.out.println("RealPath : " +getServletContext().getRealPath("/langs.xml"));
+            LANG_JSON = LanguageXml.importFile(getResource("langs.xml"), Integer.parseInt(request.getParameter("lang_id")));
             System.out.println("ImportLang :" +LANG_JSON);
         }
         catch (Exception e) {
