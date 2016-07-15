@@ -12,6 +12,7 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 import org.apache.pdfbox.util.Matrix;
 
+import javax.servlet.ServletContext;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,7 +29,8 @@ public class PDFTextAnnotator extends PDFTextStripper {
 	// private float heightModifier = (float) 2.250;
 	private float heightModifier = (float) 1;
 	private int currentLang = 1;
-	private float opacity = 0.8f;
+	private float opacity = 0.3f;
+	private UtilsBible bible;
 
 	public float getOpacity() {
 		return opacity;
@@ -117,7 +119,7 @@ public class PDFTextAnnotator extends PDFTextStripper {
 		public List<Match> getTextPositions(Integer pageNo, Pattern pattern) {
 			Matcher matcher = pattern.matcher(getText(pageNo));
 			List<Match> matches = new ArrayList<Match>();
-			UtilsBible bible = new UtilsBible(2);
+//			UtilsBible bible = new UtilsBible(currentLang, context);
 			while (matcher.find()) {
 				if (bible.isBibleReference(matcher.group())) {
 					List<TextPosition> elements = this.getTextPositions(pageNo)
@@ -229,8 +231,8 @@ public class PDFTextAnnotator extends PDFTextStripper {
 	 * @throws Exception
 	 */
 	public List<PDAnnotationTextMarkup> highlight(final PDDocument pdf,
-			final String pattern) throws Exception {
-		return highlight(pdf, Pattern.compile(pattern));
+			final String pattern, ServletContext context) throws Exception {
+		return highlight(pdf, Pattern.compile(pattern), context);
 	}
 
 	/**
@@ -244,12 +246,12 @@ public class PDFTextAnnotator extends PDFTextStripper {
 	 * @throws Exception
 	 */
 	public List<PDAnnotationTextMarkup> highlight(PDDocument pdf,
-												  Pattern pattern) throws Exception {
+												  Pattern pattern, ServletContext context) throws Exception {
 		if (textCache == null) {
 			throw new Exception(
 					"TextCache was not initilized, please run initialize on the document first");
 		}
-		UtilsBible bible = new UtilsBible(currentLang);
+		bible = new UtilsBible(currentLang, context);
 		PDPageTree pages = pdf.getDocumentCatalog().getPages();
 
 		ArrayList<PDAnnotationTextMarkup> highligts = new ArrayList<PDAnnotationTextMarkup>();
@@ -300,121 +302,6 @@ public class PDFTextAnnotator extends PDFTextStripper {
 		return highligts;
 	}
 
-//	public Reference getReference(String refText) {
-//		if (refText != null) {
-//			String prefix = "", book = "";
-//			int chapter = 1, verse;
-//			List<Integer> verses = new ArrayList<>();
-//			Pattern pattern = Pattern.compile("//");
-//			Matcher m = pattern.matcher(refText);
-//			if (m.find()) {
-//				int count = m.groupCount();
-//				if (count > 0) {
-//					prefix = m.group(1) == null ? "" : m.group(1).concat(" ");
-//				}
-//				// must at least have a book or things will eventually fail
-//				if (count > 1) {
-//					book = m.group(2) == null ? "" : m.group(2).trim();
-//				}
-//				// default chapter to 1
-//				if (count > 2) {
-//					chapter = Integer.parseInt(m.group(3) == null ? "1" : m
-//							.group(3));
-//				}
-//				// default verse to 1
-//				if (count > 3) {
-//					verse = Integer.parseInt(m.group(4) == null ? "1" : m
-//							.group(4));
-//					verses.add(verse);
-//				}
-//				if (count > 4) {
-//					// verse = Integer.parseInt(m.group(4) == null ? "1" :
-//					// m.group(4));
-//					String[] versesgp = m.group(5).replaceAll(" ", "")
-//							.split("((?<=[-,])|(?=[-,]))");
-//					for (int i = 0; i < versesgp.length; i++) {
-//						if (versesgp[i].equals("-")) {
-//							for (int y = verses.get(verses.size() - 1) + 1; y <= Integer
-//									.parseInt(versesgp[i + 1]); y++) {
-//								verses.add(y);
-//							}
-//							i++;
-//						} else if (versesgp[i].equals(",")) {
-//							verses.add(Integer.parseInt(versesgp[i + 1]));
-//							i++;
-//						}
-//					}
-//				}
-//			}
-//			// book = UtilsBible.getBook(prefix + book);
-//			if (book.length() > 1) {
-//				book = UtilsBible.getBook(prefix + book);
-//				if (book.length() > 0 && chapter > 0 && verses.size() > 0) {
-//
-//					return new Reference(this.currentLang, book, chapter,
-//							verses);
-//				}
-//			}
-//
-//		}
-//		return null;
-//	}
-
-//	private boolean isBibleReference(String refString) {
-//		String patString = "(\\d{0,1}\\.?)\\W*([\\wÀ-ú\\p{L}]{2,})\\.?\\s*(\\d{1,3})(?:\\D+(\\d{1,3})){0,1}((?:(?:,\\s?|-\\s?)\\d{1,3})*){0,1}";
-//		Pattern p = Pattern.compile(patString);
-//		Matcher m = p.matcher(refString);
-//		String prefix = "", book = "";
-//		int chapter = 0, verse = 0;
-//		ArrayList<Integer> verses = new ArrayList();
-//		if (m.find()) {
-//			int count = m.groupCount();
-//			if (count > 0) {
-//				prefix = m.group(1) == null ? "" : m.group(1).concat(" ");
-//			}
-//			// must at least have a book or things will eventually fail
-//			if (count > 1) {
-//				book = m.group(2) == null ? "" : m.group(2).trim();
-//			}
-//			// default chapter to 1
-//			if (count > 2) {
-//				chapter = Integer.parseInt(m.group(3) == null ? "0" : m
-//						.group(3));
-//			}
-//			// default verse to 1
-//			if (count > 3) {
-//				verse = Integer.parseInt(m.group(4) == null ? "0" : m.group(4));
-//				if (verse > 0) {
-//					verses.add(verse);
-//				}
-//			}
-//			if (verses.size() > 0 && count > 4) {
-//				// verse = Integer.parseInt(m.group(4) == null ? "1" :
-//				// m.group(4));
-//				String[] versesgp = m.group(5).replaceAll(" ", "")
-//						.split("((?<=[-,])|(?=[-,]))");
-//				for (int i = 0; i < versesgp.length; i++) {
-//					if (versesgp[i].equals("-")) {
-//						for (int y = verses.get(verses.size() - 1) + 1; y <= Integer
-//								.parseInt(versesgp[i + 1]); y++) {
-//							verses.add(y);
-//						}
-//						i++;
-//					} else if (versesgp[i].equals(",")) {
-//						verses.add(Integer.parseInt(versesgp[i + 1]));
-//						i++;
-//					}
-//				}
-//			}
-//		}
-//		if (book.length() > 1) {
-//			book = UtilsBible.getBook(prefix + book);
-//			if (book.length() > 0 && chapter > 0 && verses.size() > 0) {
-//				return true;
-//			}
-//		}
-//		return false;
-//	}
 
 	private float[] computeQuads(PDRectangle rect) {
 		float[] quads = new float[8];
@@ -437,18 +324,7 @@ public class PDFTextAnnotator extends PDFTextStripper {
 		this.defaultColor = color;
 	}
 
-	// public PDColor getDefaultColor() {
-	// if (this.defaultColor != null) {
-	// return this.defaultColor;
-	// } else { // #fbe85a
-	// // PDGamma c = new PDGamma();
-	// // c.setR((float) 0.9843);
-	// // c.setG((float) 0.9098);
-	// // c.setB((float) 0.3879);
-	// // return c;
-	//
-	// }
-	// }
+
 	public PDColor getDefaultColor() {
 		if (this.defaultColor != null) {
 			return this.defaultColor;

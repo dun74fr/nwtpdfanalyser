@@ -8,6 +8,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.servlet.ServletContext;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -15,6 +16,7 @@ import java.util.regex.Pattern;
 
 public class UtilsBible {
 
+    private final ServletContext context;
     private Map<String, Integer> books = new LinkedHashMap();
     private int currentLang;
     private final Pattern pattern = Pattern.compile("((?:\\d\\.?)?)\\s?([\\wÀ-ú]\\p{L}{1,})\\.?\\s*(\\d{1,3})(?::\\s?(\\d{1,3}))((?:(?:,\\s?|-\\s?)\\d{1,3})*)(?:\\s?;\\s?(\\d{1,3})(?::\\s?(\\d{1,3}))((?:(?:,\\s?|-\\s?)\\d{1,3})*))*");
@@ -27,7 +29,8 @@ public class UtilsBible {
     public static String bibleUrlNew = "http://www.jw.org/apps/TRGCHlZRQVNYVrXF?output=json&pub=nwt&fileformat=EPUB&alllangs=0&langwritten=%1";
     private Map<String, String> epubBooks;
 
-    public UtilsBible(int lang) {
+    public UtilsBible(int lang, ServletContext context) {
+        this.context = context;
         currentLang = lang;
         initBooks(currentLang);
     }
@@ -517,12 +520,13 @@ public class UtilsBible {
 
     }
 
+
     public String getStringForFile(File html) {
         Date start = new Date();
 //        System.out.println("GETBOOK " + "getStringForFile : " + start);
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(
-                    new FileInputStream(html)));
+                    context.getResourceAsStream( html.toString() )));
             String y = "";
             String inputLine;
             while ((inputLine = in.readLine()) != null)
