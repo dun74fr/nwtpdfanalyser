@@ -44,7 +44,8 @@ public final class Hello extends HttpServlet {
         String fileName = filePart.getName();
 
         response.setContentType("application/pdf");
-        response.addHeader("content-disposition", "filename=\"" + fileName +"\"");
+        System.out.println("content-disposition :" + "attachment; filename=\"" + fileName +"\"");
+        response.addHeader("content-disposition", "attachment; filename=\"" + fileName +"\"");
 //        PrintWriter writer = response.getWriter();
 //        writer.println(request.getParameter("color"));
 //        writer.println(fileName);

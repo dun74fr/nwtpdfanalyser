@@ -289,7 +289,6 @@ public class PDFTextAnnotator extends PDFTextStripper {
 					}
 
 					markup.setQuadPoints(quads);
-
 					markup.setConstantOpacity(getOpacity());
 					markup.setColor(getDefaultColor());
 					markup.setPrinted(true);
