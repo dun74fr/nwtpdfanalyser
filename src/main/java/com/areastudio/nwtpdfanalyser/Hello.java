@@ -44,7 +44,7 @@ public final class Hello extends HttpServlet {
         String fileName = filePart.getName();
 
         response.setContentType("application/pdf");
-        response.addHeader("content-disposition", "filename=" + fileName);
+        response.addHeader("content-disposition", "filename=\"" + fileName +"\"");
 //        PrintWriter writer = response.getWriter();
 //        writer.println(request.getParameter("color"));
 //        writer.println(fileName);
@@ -71,10 +71,12 @@ public final class Hello extends HttpServlet {
         int color = Integer.parseInt(request.getParameter("color"));
 
         pdfAnnotator.setDefaultColor(new PDColor(new float[] { red(color) / 100, green(color) / 100, blue(color)/100 },PDDeviceRGB.INSTANCE));
+
         if (color == -1){
             pdfAnnotator.setOpacity(0f);
         }
 
+        pdfAnnotator.setCurrentLang(Integer.parseInt(request.getParameter("lang_id")));
         // new
         // annotator
         pdfAnnotator.setLineSeparator(" "); // kinda depends on what you want to

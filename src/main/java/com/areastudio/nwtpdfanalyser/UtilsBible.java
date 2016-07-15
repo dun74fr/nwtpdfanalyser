@@ -499,6 +499,7 @@ public class UtilsBible {
     public String getStringForBookAndChap(Reference reference, int versionNum) {
 
         if (isEpubMode(currentLang,versionNum)) {
+
             String file = getBibleFileName(currentLang).replace(".epub", "")
                     + "/OEBPS/" + getFileForReference(true, reference);
             String html = getStringForFile(new File(file));
@@ -544,9 +545,11 @@ public class UtilsBible {
 
             return y;
         } catch (IOException e) {
+            e.printStackTrace();
             System.out.println("getStringForFile " + e.getMessage());
             return "Error " + e.getMessage();
         }catch (NullPointerException e) {
+            e.printStackTrace();
             System.out.println("getStringForFile " + e.getMessage());
             return "Error " + e.getMessage();
         }

@@ -32,7 +32,11 @@ public class PDFTextAnnotator extends PDFTextStripper {
 	private float opacity = 0.3f;
 	private UtilsBible bible;
 
-	public float getOpacity() {
+    public void setCurrentLang(int currentLang) {
+        this.currentLang = currentLang;
+    }
+
+    public float getOpacity() {
 		return opacity;
 	}
 
