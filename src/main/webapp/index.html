@@ -302,7 +302,7 @@
         </div>
 
         <div class="control-group">
-            <input type="submit" class="btn btn-inverse" value="Analyse"></input>
+            <input type="submit" class="btn btn-inverse" value="Analyse" ></input>
             <!--<a href="#" onclick="logout();return false;" class="btn btn-inverse"><i class="icon-white icon-eject"></i> Logout</a>-->
         </div>
         <!--Color :<input name="color" type="text"/>-->
@@ -373,6 +373,41 @@
     $('#color').change(function() {
         $.cookie('color', $('#color option:selected').val(), { expires: 90, path: '/'});
     });
+
+
+</script>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-5902686-5', 'auto');
+    ga('send', 'pageview');
+
+    var form = document.getElementById('form1');
+
+    // Adds a listener for the "submit" event.
+    form.addEventListener('submit', function(event) {
+
+        // Prevents the browser from submiting the form
+        // and thus unloading the current page.
+        event.preventDefault();
+
+        // Sends the event to Google Analytics and
+        // resubmits the form once the hit is done.
+        ga('send', {
+            hitType: 'event',
+            eventCategory: 'Analyse',
+            eventAction: 'pdfsent',
+            eventLabel: document.getElementById("pdf").value,
+            hitCallback: function() {
+                form.submit();
+            }
+        });
+
+    });
+
 </script>
 </body>
 </html>
