@@ -77,6 +77,8 @@ public final class Hello extends HttpServlet {
 
         if (color == -1){
             pdfAnnotator.setOpacity(0f);
+        }else {
+            pdfAnnotator.setOpacity(0.2f);
         }
 
         pdfAnnotator.setCurrentLang(Integer.parseInt(request.getParameter("lang_id")));
