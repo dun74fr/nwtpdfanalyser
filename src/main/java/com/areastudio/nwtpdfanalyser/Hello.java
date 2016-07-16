@@ -41,11 +41,13 @@ public final class Hello extends HttpServlet {
             throws IOException, ServletException {
 
         Part filePart = request.getPart("pdf"); // Retrieves <input type="file" name="file">
-        String fileName = filePart.getName();
+        String disposition = filePart.getHeader("Content-Disposition");
+        String fileName = disposition.replaceFirst("(?i)^.*filename=\"([^\"]+)\".*$", "$1");
+
 
         response.setContentType("application/pdf");
-        System.out.println("content-disposition :" + "attachment; filename=\"" + request.getParameter("pdf") +"\"");
-        response.addHeader("content-disposition", "attachment; filename=\"" + request.getParameter("pdf") +"\"");
+        System.out.println("content-disposition :" + "attachment; filename=\"" + fileName +"\"");
+        response.addHeader("content-disposition", "attachment; filename=\"" + fileName +"\"");
 //        PrintWriter writer = response.getWriter();
 //        writer.println(request.getParameter("color"));
 //        writer.println(fileName);
