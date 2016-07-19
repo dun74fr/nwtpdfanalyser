@@ -361,6 +361,7 @@
 
 <script>
     if($.cookie('lang_id') != null) {
+        $("#lang_id").val([]);
         $('#lang_id option[value="' + $.cookie('lang_id') + '"]').attr('selected', 'selected');
     }
     $('#lang_id').change(function() {
@@ -368,6 +369,7 @@
     });
 
     if($.cookie('color') != null) {
+        $("#color").val([]);
         $('#color option[value="' + $.cookie('color') + '"]').attr('selected', 'selected');
     }
     $('#color').change(function() {
