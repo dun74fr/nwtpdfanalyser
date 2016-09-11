@@ -104,6 +104,7 @@ public final class Hello extends HttpServlet {
             try {
 
                 PDFTextAnnotator pdfAnnotator = new PDFTextAnnotator("UTF-8");
+                pdfAnnotator.setCurrentLang(Integer.parseInt(request.getParameter("lang_id")));
                 int color = Integer.parseInt(request.getParameter("color"));
 
                 pdfAnnotator.setDefaultColor(new PDColor(new float[]{red(color) / 100, green(color) / 100, blue(color) / 100}, PDDeviceRGB.INSTANCE));
