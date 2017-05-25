@@ -455,9 +455,6 @@ public class UtilsBible {
         String finalText = "";
         for (Integer i : reference.verses) {
             int book = getBookNum(reference.book) + 1;
-            if (getBooks().size() < 66) {
-                book += 39;
-            }
             String id = "v" + (book)
                     + String.format("%03d", reference.chapter) + String.format("%03d", i);
             Element content = doc.getElementById(id);
@@ -468,6 +465,16 @@ public class UtilsBible {
                 finalText += content.text().replaceAll("\\+", "")
                         .replaceAll(" ", " ");
 
+                content = content.parent();
+                while (content != null && content.nextElementSibling() != null && content.nextElementSibling().tagName().equals("p") && !content.nextElementSibling().html().contains("class=\"verse")) {
+                    content = content.nextElementSibling();
+                    if (finalText.length() > 0) {
+                        finalText += " ";
+                    }
+                    finalText += content.text().replaceAll("\\+", "")
+                            .replaceAll(" ", " ");
+
+                }
             }
         }
         finalText = finalText.replaceAll("(.*?)(\\D)(\\d)(.*?)", "$1$2 $3$4");
